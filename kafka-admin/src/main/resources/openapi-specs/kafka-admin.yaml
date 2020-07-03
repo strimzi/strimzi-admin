@@ -1,0 +1,67 @@
+openapi: 3.0.0
+info:
+  title: Strimzi Kafka Admin API
+  version: 0.1.0
+  description: An API to administer Kafka
+paths:
+  "/topics":
+    #==============================#
+    # GET /topics
+    #==============================#
+    get:
+      operationId: ListTopics
+      summary: Get a list of topic names
+      description: Returns a list of topic names
+      responses:
+        '200':
+          description: The list of topic names
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/listTopicsResponse'
+
+  "/topics/{topic-name}":
+    parameters:
+      - $ref: '#/components/parameters/topicName'
+
+    #==============================#
+    # GET /topics/{topic-name}
+    #==============================#
+    get:
+      operationId: GetTopic
+      summary: Get detailed information on a topic.
+      description: Get detailed information on a topic.
+      responses:
+        '200':
+          description: returns a detailed description of a single topic
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/getTopicResponse'
+
+components:
+  parameters:
+    topicName:
+      name: topic-name
+      description: The name of the Kafka topic
+      in: path
+      required: true
+      schema:
+        type: string
+
+  schemas:
+    listTopicsResponse:
+      type: array
+      items:
+        type: string
+    getTopicResponse:
+      type: object
+      properties:
+        name:
+          type: string
+        partition_count:
+          type: integer
+        replication_factor:
+          type: integer
+        is_internal:
+          type: boolean
