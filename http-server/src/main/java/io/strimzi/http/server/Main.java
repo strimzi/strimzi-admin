@@ -1,14 +1,15 @@
 package io.strimzi.http.server;
 
+import io.strimzi.http.server.logging.Utils;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Main {
 
-    private static final Logger LOGGER = LogManager.getLogger(Main.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
     /**
      * Main entrypoint.
@@ -23,7 +24,8 @@ public class Main {
 
         run(vertx)
             .onFailure(throwable -> {
-                LOGGER.atFatal().withThrowable(throwable).log("AdminServer startup failed.");
+                LOGGER.error("AdminServer startup failed.");
+                LOGGER.error(Utils.formatStacktrace(throwable));
                 System.exit(1);
             });
     }
@@ -36,7 +38,8 @@ public class Main {
         vertx.deployVerticle(adminServer,
             res -> {
                 if (res.failed()) {
-                    LOGGER.atFatal().withThrowable(res.cause()).log("AdminServer verticle failed to start");
+                    LOGGER.error("AdminServer verticle failed to start");
+                    LOGGER.error(Utils.formatStacktrace(res.cause()));
                 }
                 promise.handle(res);
             }
@@ -44,4 +47,5 @@ public class Main {
 
         return promise.future();
     }
+
 }

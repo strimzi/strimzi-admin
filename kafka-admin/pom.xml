@@ -10,6 +10,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>kafka-admin</artifactId>
+    <packaging>jar</packaging>
+    <name>Kafka Admin API</name>
 
     <dependencies>
         <dependency>
@@ -22,7 +24,7 @@
         </dependency>
         <dependency>
             <groupId>io.strimzi</groupId>
-            <artifactId>http-server</artifactId>
+            <artifactId>http-server-api</artifactId>
         </dependency>
     </dependencies>
 

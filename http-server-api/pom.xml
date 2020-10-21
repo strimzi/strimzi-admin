@@ -9,23 +9,16 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>health</artifactId>
-    <packaging>jar</packaging>
-    <name>Admin Server Health API</name>
+    <artifactId>http-server-api</artifactId>
+
+    <name>Strimzi Admin HTTP Server API</name>
 
     <dependencies>
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-web</artifactId>
         </dependency>
-        <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-web-api-contract</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.strimzi</groupId>
-            <artifactId>http-server-api</artifactId>
-        </dependency>
     </dependencies>
+
 
 </project>

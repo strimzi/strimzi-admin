@@ -1,27 +1,26 @@
 package io.strimzi.kafka.admin;
 
-import io.strimzi.http.server.RestService;
+import io.strimzi.http.server.api.RouteRegistration;
+import io.strimzi.http.server.api.RouteRegistrationDescriptor;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.javatuples.Triplet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class KafkaAdminService implements RestService {
+public class KafkaAdminService implements RouteRegistration {
 
-    private static final Logger LOGGER = LogManager.getLogger(KafkaAdminService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(KafkaAdminService.class);
 
     @Override
-    public Future<Triplet<String, String, Router>> registerRoutes(final Vertx vertx) {
+    public Future<RouteRegistrationDescriptor> registerRoutes(final Vertx vertx) {
 
-        final Promise<Triplet<String, String, Router>> promise = Promise.promise();
+        final Promise<RouteRegistrationDescriptor> promise = Promise.promise();
 
         OpenAPI3RouterFactory.create(vertx, "openapi-specs/kafka-admin.yaml",
             ar -> createRouterFactory(ar, promise));
@@ -29,7 +28,7 @@ public class KafkaAdminService implements RestService {
         return promise.future();
     }
 
-    private void createRouterFactory(final AsyncResult<OpenAPI3RouterFactory> ar, final Promise<Triplet<String, String, Router>> registerPromise) {
+    private void createRouterFactory(final AsyncResult<OpenAPI3RouterFactory> ar, final Promise<RouteRegistrationDescriptor> registerPromise) {
 
         if (ar.succeeded()) {
             final OpenAPI3RouterFactory routerFactory = ar.result();
@@ -37,7 +36,7 @@ public class KafkaAdminService implements RestService {
             routerFactory.addHandlerByOperationId("ListTopics", this::listTopics);
             routerFactory.addHandlerByOperationId("GetTopic", this::getTopic);
 
-            registerPromise.complete(Triplet.with(KafkaAdminService.class.getName(), "/kafka", routerFactory.getRouter()));
+            registerPromise.complete(RouteRegistrationDescriptor.create("/kafka", routerFactory.getRouter()));
             LOGGER.info("Endpoint '/kafka/topics' registered.");
             LOGGER.info("Endpoint '/kafka/topics/{topic-name}' registered.");
         } else {
