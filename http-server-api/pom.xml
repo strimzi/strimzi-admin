@@ -11,14 +11,21 @@
 
     <artifactId>http-server-api</artifactId>
 
-    <name>Strimzi Admin HTTP Server API</name>
+    <name>Strimzi Admin Http Server API</name>
 
     <dependencies>
         <dependency>
             <groupId>io.vertx</groupId>
+            <artifactId>vertx-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
             <artifactId>vertx-web</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
     </dependencies>
-
 
 </project>

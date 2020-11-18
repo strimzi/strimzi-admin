@@ -1,4 +1,2 @@
 mvn install
-cd http-server
-mvn exec:exec
-cd ../
+mvn -pl http-server exec:exec

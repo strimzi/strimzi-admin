@@ -16,6 +16,7 @@
         <module>http-server</module>
         <module>health</module>
         <module>kafka-admin</module>
+        <module>docker-build</module>
         <module>http-server-api</module>
     </modules>
 
@@ -23,7 +24,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!-- Dependency Versions -->
-        <vertx.version>3.9.3</vertx.version>
+        <vertx.version>3.9.4</vertx.version>
         <slf4j.version>1.8.0-beta4</slf4j.version>
         <!-- Plugin Versions -->
         <maven.compiler.version>3.8.1</maven.compiler.version>
@@ -71,23 +72,6 @@
         </dependencies>
     </dependencyManagement>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-yaml</artifactId>
-            <version>2.11.1</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.11.1</version>
-        </dependency>
-    </dependencies>
-
     <build>
         <pluginManagement>
             <plugins>
@@ -102,4 +86,5 @@
             </plugins>
         </pluginManagement>
     </build>
+
 </project>
