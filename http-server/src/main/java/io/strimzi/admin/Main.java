@@ -1,5 +1,6 @@
-package io.strimzi.http.server;
+package io.strimzi.admin;
 
+import io.strimzi.admin.http.server.AdminServer;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -16,11 +17,9 @@ public class Main {
      * @param args the command line arguments
      */
     public static void main(final String[] args) {
-
         LOGGER.info("AdminServer is starting.");
 
         final Vertx vertx = Vertx.vertx();
-
         run(vertx)
             .onFailure(throwable -> {
                 LOGGER.atFatal().withThrowable(throwable).log("AdminServer startup failed.");
@@ -29,7 +28,6 @@ public class Main {
     }
 
     static Future<String> run(final Vertx vertx) {
-
         final Promise<String> promise = Promise.promise();
         final AdminServer adminServer = new AdminServer();
 

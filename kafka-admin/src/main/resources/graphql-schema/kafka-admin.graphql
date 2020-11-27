@@ -1,0 +1,11 @@
+extend type Query {
+    topic(topicName: String): Topic
+    topicList(filter: String): [Topic]
+}
+
+type Topic {
+    name: String
+    isInternal: Boolean
+    partitionCount: Int
+    replicationFactor: Int
+}
