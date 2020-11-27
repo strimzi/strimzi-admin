@@ -1,5 +1,11 @@
 schema {
     query: Query
+    mutation: Mutation
 }
 
-type Query {}
+type Query {
+}
+
+type Mutation {
+
+}
