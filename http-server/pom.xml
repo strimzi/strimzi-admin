@@ -14,7 +14,19 @@
     <dependencies>
         <dependency>
             <groupId>io.vertx</groupId>
+            <artifactId>vertx-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
             <artifactId>vertx-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
         </dependency>
     </dependencies>
 
@@ -40,7 +52,8 @@
                                     </manifestEntries>
                                 </transformer>
                             </transformers>
-                            <outputFile>${project.build.directory}/${project.artifactId}-${project.version}-fat.jar</outputFile>
+                            <outputFile>${project.build.directory}/${project.artifactId}-${project.version}-fat.jar
+                            </outputFile>
                         </configuration>
                     </execution>
                 </executions>

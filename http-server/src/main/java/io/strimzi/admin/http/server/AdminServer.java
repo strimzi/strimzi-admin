@@ -14,6 +14,15 @@ import java.util.ServiceLoader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * The main Strimzi Admin Server class. It is a Vert.x {@link io.vertx.core.Verticle} and it starts
+ * an HTTP server which listen for inbound HTTP requests.
+ * <p>
+ * The resources that are defined to the server are loaded using the Java Service loader
+ * mechanism. All modules implementing the {@link RouteRegistration} interface are loaded and the
+ * getRegistrationDescriptor method called to get the set of routes and the mount point. The routes
+ * are added to the server Router at the mount point.
+ */
 public class AdminServer extends AbstractVerticle {
     private static final Logger LOGGER = LogManager.getLogger(AdminServer.class);
 

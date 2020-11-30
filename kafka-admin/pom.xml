@@ -14,15 +14,15 @@
     <dependencies>
         <dependency>
             <groupId>io.vertx</groupId>
-            <artifactId>vertx-web</artifactId>
+            <artifactId>vertx-core</artifactId>
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>
-            <artifactId>vertx-web-api-contract</artifactId>
+            <artifactId>vertx-web-graphql</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.strimzi</groupId>
-            <artifactId>http-server</artifactId>
+            <groupId>com.graphql-java</groupId>
+            <artifactId>graphql-java</artifactId>
         </dependency>
         <dependency>
             <groupId>io.strimzi</groupId>

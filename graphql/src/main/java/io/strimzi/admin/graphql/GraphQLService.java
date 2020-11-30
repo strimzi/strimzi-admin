@@ -27,6 +27,24 @@ import java.util.ServiceLoader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * GraphQLService configures the GraphQL library by making an executable schema from a schema
+ * ({@link graphql.schema.idl.TypeDefinitionRegistry}) and its implementation
+ * ({@link graphql.schema.idl.RuntimeWiring}).
+ * <p>
+ * The executable schema is exposed on the /graphql endpoint of the http-server.
+ * If the vertx web development environment is set, the graphiql tool will also be made available
+ * as the /graphiql endpoint on the http-server.
+ * <p>
+ * The schema and its implementation are built in a modular fashion to allow the full executable
+ * schema to be decomposed into logical/business areas. Each module defines the schema and
+ * implementation relevant to its logical/business area and exposes this through a
+ * {@link GraphQLRegistration} object which is loaded from the classpath using the Java service
+ * loader. All the individual GraphQLRegistration objects are processed in this service and the
+ * schemas and implementations merged. The merged objects are then used to create the executable
+ * schema of the {@link graphql.GraphQL} which controls the processing of the GraphQL requests
+ * which are passed through the /graphql endpoint.
+ */
 public class GraphQLService implements RouteRegistration {
 
     private static final Logger LOGGER = LogManager.getLogger(GraphQLService.class);
@@ -62,17 +80,20 @@ public class GraphQLService implements RouteRegistration {
         Promise<GraphQLHandler> promise = Promise.promise();
 
         vertx.executeBlocking(p -> {
-                final SchemaParser schemaParser = new SchemaParser();
-                final InputStreamReader userInputStream = new InputStreamReader(
-                    Objects.requireNonNull(
-                        getClass()
-                            .getClassLoader()
-                            .getResourceAsStream(GraphQLService.BASE_SCHEMA_LOCATION)),
-                    StandardCharsets.UTF_8);
+                try {
+                    final SchemaParser schemaParser = new SchemaParser();
+                    final InputStreamReader userInputStream = new InputStreamReader(
+                        Objects.requireNonNull(
+                            getClass()
+                                .getClassLoader()
+                                .getResourceAsStream(GraphQLService.BASE_SCHEMA_LOCATION)),
+                        StandardCharsets.UTF_8);
 
-                final TypeDefinitionRegistry typeDefinitionRegistry = schemaParser.parse(userInputStream);
-                p.complete(typeDefinitionRegistry);
-
+                    final TypeDefinitionRegistry typeDefinitionRegistry = schemaParser.parse(userInputStream);
+                    p.complete(typeDefinitionRegistry);
+                } catch (Exception exc) {
+                    p.fail(exc);
+                }
             }, ar -> {
                 if (ar.succeeded()) {
                     setupGraphQL(vertx, (TypeDefinitionRegistry) ar.result())

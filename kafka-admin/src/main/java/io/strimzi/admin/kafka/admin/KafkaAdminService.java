@@ -15,6 +15,10 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
+/**
+ * Defines the GraphQL schema and its implementation for the Kafka Admin client
+ * queries and mutations.
+ */
 public class KafkaAdminService implements GraphQLRegistration {
     private static final String KAFKA_ADMIN_SCHEMA_LOCATION = "graphql-schema/kafka-admin.graphql";
 
@@ -23,17 +27,21 @@ public class KafkaAdminService implements GraphQLRegistration {
         final Promise<GraphQLRegistrationDescriptor> promise = Promise.promise();
 
         vertx.executeBlocking(p -> {
-            final SchemaParser schemaParser = new SchemaParser();
-            final InputStreamReader userInputStream = new InputStreamReader(
-                Objects.requireNonNull(
-                    getClass()
-                        .getClassLoader()
-                        .getResourceAsStream(KAFKA_ADMIN_SCHEMA_LOCATION)),
-                StandardCharsets.UTF_8);
+            try {
+                final SchemaParser schemaParser = new SchemaParser();
+                final InputStreamReader userInputStream = new InputStreamReader(
+                    Objects.requireNonNull(
+                        getClass()
+                            .getClassLoader()
+                            .getResourceAsStream(KAFKA_ADMIN_SCHEMA_LOCATION)),
+                    StandardCharsets.UTF_8);
 
-            final TypeDefinitionRegistry typeDefinitionRegistry = schemaParser.parse(userInputStream);
-
-            p.complete(typeDefinitionRegistry);
+                final TypeDefinitionRegistry typeDefinitionRegistry = schemaParser.parse(userInputStream);
+                p.complete(typeDefinitionRegistry);
+            }
+            catch (Exception exc) {
+                p.fail(exc);
+            }
         }, ar -> {
             final TypeDefinitionRegistry schema = (TypeDefinitionRegistry) ar.result();
 
