@@ -1,11 +1,62 @@
-extend type Query {
-    topic(topicName: String): Topic
-    topicList(filter: String): [Topic]
+type Topic {
+    #id: ID
+    name: String
+    partition_count: Int
+    replication_factor: Int
+    is_internal: Boolean
+
+    """@transient"""
+    partitions: [Partitions]
+    config: TopicConfig
 }
 
-type Topic {
+type Partitions {
+    partition: Int
+    replicas: [Replicas]
+}
+
+type Replicas {
+    id: String
+    in_sync: Boolean
+}
+
+type TopicOnlyName {
+    #id: ID
     name: String
-    isInternal: Boolean
+}
+
+type TopicConfig {
+    retentionDays: Int
     partitionCount: Int
+    minInSyncReplicas: Int
     replicationFactor: Int
+}
+
+input CreateOrMutateTopicConfigInput {
+    retentionDays: Int
+    partitionCount: Int
+    minInSyncReplicas: Int
+    replicationFactor: Int
+}
+
+input CreateTopicInput {
+    name: String
+    config: CreateOrMutateTopicConfigInput
+}
+
+input MutateTopicInput {
+    #id: ID!
+    name: String!
+    config: CreateOrMutateTopicConfigInput
+}
+
+extend type Mutation {
+    createTopic(input: CreateTopicInput!): Topic
+    updateTopic(input: MutateTopicInput!): Topic
+    deleteTopic(name: String!): String
+}
+
+extend type Query {
+    topicList(filter: String): [TopicOnlyName!]
+    topic(name: String!): Topic!
 }

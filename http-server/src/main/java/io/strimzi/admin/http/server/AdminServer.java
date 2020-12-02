@@ -10,6 +10,7 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.ServiceLoader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,6 +26,11 @@ import org.apache.logging.log4j.Logger;
  */
 public class AdminServer extends AbstractVerticle {
     private static final Logger LOGGER = LogManager.getLogger(AdminServer.class);
+    private Map<String, Object> config;
+
+    public AdminServer(Map<String, Object> config) {
+        this.config = config;
+    }
 
     @Override
     public void start(final Promise<Void> startServer) {
@@ -43,7 +49,7 @@ public class AdminServer extends AbstractVerticle {
         final ServiceLoader<RouteRegistration> loader = ServiceLoader.load(RouteRegistration.class);
         final List<Future<RouteRegistrationDescriptor>> routeRegistrationDescriptors = new ArrayList<>();
 
-        loader.forEach(routeRegistration -> routeRegistrationDescriptors.add(routeRegistration.getRegistrationDescriptor(vertx)));
+        loader.forEach(routeRegistration -> routeRegistrationDescriptors.add(routeRegistration.getRegistrationDescriptor(vertx, config)));
 
         return CompositeFuture.all(new ArrayList<>(routeRegistrationDescriptors))
             .onSuccess(cf -> routeRegistrationDescriptors.forEach(future -> {

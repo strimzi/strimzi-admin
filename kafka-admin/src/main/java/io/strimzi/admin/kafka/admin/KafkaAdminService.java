@@ -5,14 +5,16 @@ import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import io.strimzi.admin.graphql.registration.GraphQLRegistration;
 import io.strimzi.admin.graphql.registration.GraphQLRegistrationDescriptor;
+import io.strimzi.admin.kafka.admin.handlers.TopicCreateHandler;
+import io.strimzi.admin.kafka.admin.handlers.TopicDeleteHandler;
 import io.strimzi.admin.kafka.admin.handlers.TopicHandler;
 import io.strimzi.admin.kafka.admin.handlers.TopicListHandler;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.ext.web.handler.graphql.VertxDataFetcher;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -21,6 +23,12 @@ import java.util.Objects;
  */
 public class KafkaAdminService implements GraphQLRegistration {
     private static final String KAFKA_ADMIN_SCHEMA_LOCATION = "graphql-schema/kafka-admin.graphql";
+    private Map<String, Object> config;
+
+    @Override
+    public void setConfiguration(Map<String, Object> config) {
+        this.config = config;
+    }
 
     @Override
     public Future<GraphQLRegistrationDescriptor> getRegistrationDescriptor(final Vertx vertx) {
@@ -45,10 +53,17 @@ public class KafkaAdminService implements GraphQLRegistration {
         }, ar -> {
             final TypeDefinitionRegistry schema = (TypeDefinitionRegistry) ar.result();
 
+            AdminClientProvider acp = new AdminClientProvider(vertx, config);
+            acp.open();
+            // todo close acp
             final RuntimeWiring query = RuntimeWiring.newRuntimeWiring()
                 .type("Query", typeWiring -> typeWiring
-                    .dataFetcher("topic", new VertxDataFetcher<>(TopicHandler::getTopic))
-                    .dataFetcher("topicList", new VertxDataFetcher<>(TopicListHandler::getTopicList))
+                    .dataFetcher("topic", TopicHandler.topicInfoFetch(acp))
+                    .dataFetcher("topicList", TopicListHandler.topicListFetch(acp))
+                )
+                .type("Mutation", typeWiring -> typeWiring
+                        .dataFetcher("deleteTopic", TopicDeleteHandler.deleteTopic(acp))
+                        .dataFetcher("createTopic", TopicCreateHandler.createTopic(acp))
                 )
                 .build();
 

@@ -24,8 +24,9 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <!-- Dependency Versions -->
         <vertx.version>3.9.4</vertx.version>
-        <log4j.version>2.13.3</log4j.version>
+        <log4j.version>2.14.0</log4j.version>
         <graphql-java.version>16.1</graphql-java.version>
+        <commons-cli.version>1.4</commons-cli.version>
         <!-- Plugin Versions -->
         <maven.compiler.version>3.8.1</maven.compiler.version>
         <maven.dependency.version>3.1.2</maven.dependency.version>
@@ -40,12 +41,22 @@
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
-            <dependency>
+            <!--dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-bom</artifactId>
                 <version>${log4j.version}</version>
                 <scope>import</scope>
                 <type>pom</type>
+            </dependency-->
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-core</artifactId>
+                <version>${log4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-api</artifactId>
+                <version>${log4j.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.strimzi</groupId>
@@ -56,6 +67,11 @@
                 <groupId>com.graphql-java</groupId>
                 <artifactId>graphql-java</artifactId>
                 <version>${graphql-java.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-cli</groupId>
+                <artifactId>commons-cli</artifactId>
+                <version>${commons-cli.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
