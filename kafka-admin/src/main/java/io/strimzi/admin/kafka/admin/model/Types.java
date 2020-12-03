@@ -188,11 +188,33 @@ public class Types {
         }
     }
 
+    public static class TopicConfigEntry {
+        String key;
+        String value;
+
+        public String getKey() {
+            return key;
+        }
+
+        public void setKey(String key) {
+            this.key = key;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public void setValue(String value) {
+            this.value = value;
+        }
+    }
+
     public static class TopicConfig {
         private Long partitionCount;
         private Long replicationFactor;
         private Long minInsyncReplicas;
         private Boolean isInternal;
+        private List<TopicConfigEntry> pairs;
 
         public Long getPartitionCount() {
             return partitionCount;
@@ -224,6 +246,14 @@ public class Types {
 
         public void setIsInternal(Boolean internal) {
             isInternal = internal;
+        }
+
+        public List<TopicConfigEntry> getPairs() {
+            return pairs;
+        }
+
+        public void setPairs(List<TopicConfigEntry> pairs) {
+            this.pairs = pairs;
         }
     }
 }

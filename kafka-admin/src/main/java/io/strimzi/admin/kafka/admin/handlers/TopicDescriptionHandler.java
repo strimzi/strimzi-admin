@@ -68,10 +68,21 @@ public class TopicDescriptionHandler {
                     Config cfg = topics.result().get(resource);
                     List<ConfigEntry> entries = cfg.getEntries();
 
-                    tc.setMinInsyncReplicas(Long.parseLong(entries.stream().filter(nts -> nts.getName().equals("min.insync.replicas")).findFirst().get().getValue()));
-                    // is there a better way how to fill $set od properties
+                    // way 1 to fill $set od properties
                     // what is the $set?
                     //tc.setRetentionMs("retentionMs", entries.stream().filter(nts -> nts.getName().equals("retention.ms")).findFirst().get().getValue());
+                    tc.setMinInsyncReplicas(Long.parseLong(entries.stream().filter(nts -> nts.getName().equals("min.insync.replicas")).findFirst().get().getValue()));
+
+                    List<Types.TopicConfigEntry> topicConfigEntries = new ArrayList<>();
+                    // way2 put there everything
+                    entries.stream().forEach(entry -> {
+                        Types.TopicConfigEntry tce = new Types.TopicConfigEntry();
+                        tce.setKey(entry.getName());
+                        tce.setValue(entry.getValue());
+                        topicConfigEntries.add(tce);
+                    });
+                    tc.setPairs(topicConfigEntries);
+
                     t.setConfig(tc);
                     prom.complete(t);
                 });

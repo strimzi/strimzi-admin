@@ -26,7 +26,14 @@ type TopicConfig {
     partitionCount: Int
     replicationFactor: Int
     isInternal: Boolean
+    # config
     minInsyncReplicas: Int
+    pairs: [ConfigEntry]
+}
+
+type ConfigEntry {
+    key: String
+    value: String
 }
 
 input CreateOrMutateTopicConfigInput {
