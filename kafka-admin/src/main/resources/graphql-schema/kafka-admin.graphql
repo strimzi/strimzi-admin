@@ -36,12 +36,16 @@ type ConfigEntry {
     value: String
 }
 
+input ConfigEntryInput {
+    key: String
+    value: String
+}
+
 input CreateOrMutateTopicConfigInput {
-    retentionDays: Int
-    minInSyncReplicas: Int
     partitionCount: Int
     replicationFactor: Int
     isInternal: Boolean
+    pairs: [ConfigEntryInput]
 }
 
 input CreateTopicInput {

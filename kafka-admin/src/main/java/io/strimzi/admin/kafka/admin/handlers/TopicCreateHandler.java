@@ -10,8 +10,10 @@ import io.vertx.core.Promise;
 import io.vertx.ext.web.handler.graphql.VertxDataFetcher;
 import io.vertx.kafka.admin.NewTopic;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class TopicCreateHandler {
@@ -27,10 +29,7 @@ public class TopicCreateHandler {
             Types.CreateTopicInput createTopicInput = new Types.CreateTopicInput();
             createTopicInput.setName(input.get("name").toString());
             Types.CreateOrMutateTopicConfigInput createOrMutateTopicConfigInput = new Types.CreateOrMutateTopicConfigInput();
-            if (configObject.get("minInSyncReplicas") != null) {
-                Integer val = (Integer) configObject.get("minInSyncReplicas");
-                createOrMutateTopicConfigInput.setMinInSyncReplicas(val);
-            }
+
             if (configObject.get("partitionCount") != null) {
                 String val = configObject.get("partitionCount").toString();
                 createOrMutateTopicConfigInput.setPartitionCount(Long.parseLong(val));
@@ -41,11 +40,11 @@ public class TopicCreateHandler {
                 createOrMutateTopicConfigInput.setReplicationFactor(Long.parseLong(val));
                 newTopic.setReplicationFactor(Short.parseShort(val));
             }
-            if (configObject.get("retentionDays") != null) {
-                String val = configObject.get("retentionDays").toString();
-                createOrMutateTopicConfigInput.setRetentionDays(Integer.parseInt(val));
-                Integer daysToHours = Integer.parseInt(val) * 86400000;
-                config.put("retention.ms", daysToHours.toString());
+            if (configObject.get("pairs") != null) {
+                List<Map> list = (ArrayList) configObject.get("pairs");
+                list.forEach(entry -> {
+                    config.put(entry.get("key").toString(), entry.get("value").toString());
+                });
             }
 
             createTopicInput.setConfig(createOrMutateTopicConfigInput);

@@ -55,8 +55,7 @@ public class Types {
         private Long replicationFactor;
         private Boolean isInternal;
 
-        private Integer minInSyncReplicas;
-        private Integer retentionDays;
+        private List<TopicConfigEntry> pairs;
 
         public CreateOrMutateTopicConfigInput() {}
 
@@ -84,20 +83,12 @@ public class Types {
             this.isInternal = isInternal;
         }
 
-        public Integer getMinInSyncReplicas() {
-            return minInSyncReplicas;
+        public List<TopicConfigEntry> getPairs() {
+            return pairs;
         }
 
-        public void setMinInSyncReplicas(Integer minInSyncReplicas) {
-            this.minInSyncReplicas = minInSyncReplicas;
-        }
-
-        public Integer getRetentionDays() {
-            return retentionDays;
-        }
-
-        public void setRetentionDays(Integer retentionDays) {
-            this.retentionDays = retentionDays;
+        public void setPairs(List<TopicConfigEntry> pairs) {
+            this.pairs = pairs;
         }
     }
     public static class CreateTopicInput {
