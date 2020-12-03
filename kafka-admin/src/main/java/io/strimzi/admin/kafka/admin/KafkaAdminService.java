@@ -7,7 +7,7 @@ import io.strimzi.admin.graphql.registration.GraphQLRegistration;
 import io.strimzi.admin.graphql.registration.GraphQLRegistrationDescriptor;
 import io.strimzi.admin.kafka.admin.handlers.TopicCreateHandler;
 import io.strimzi.admin.kafka.admin.handlers.TopicDeleteHandler;
-import io.strimzi.admin.kafka.admin.handlers.TopicHandler;
+import io.strimzi.admin.kafka.admin.handlers.TopicDescriptionHandler;
 import io.strimzi.admin.kafka.admin.handlers.TopicListHandler;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -58,7 +58,7 @@ public class KafkaAdminService implements GraphQLRegistration {
             // todo close acp
             final RuntimeWiring query = RuntimeWiring.newRuntimeWiring()
                 .type("Query", typeWiring -> typeWiring
-                    .dataFetcher("topic", TopicHandler.topicInfoFetch(acp))
+                    .dataFetcher("topicDescription", TopicDescriptionHandler.topicDescriptionFetch(acp))
                     .dataFetcher("topicList", TopicListHandler.topicListFetch(acp))
                 )
                 .type("Mutation", typeWiring -> typeWiring

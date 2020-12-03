@@ -1,4 +1,4 @@
-type Topic {
+type TopicDescription {
     #id: ID
     name: String
 
@@ -14,7 +14,7 @@ type Partitions {
 
 type Replicas {
     id: String
-    in_sync: Boolean
+    inSync: Boolean
 }
 
 type TopicOnlyName {
@@ -26,7 +26,7 @@ type TopicConfig {
     partitionCount: Int
     replicationFactor: Int
     isInternal: Boolean
-    partitions: [Partitions]
+    minInsyncReplicas: Int
 }
 
 input CreateOrMutateTopicConfigInput {
@@ -49,12 +49,12 @@ input MutateTopicInput {
 }
 
 extend type Mutation {
-    createTopic(input: CreateTopicInput!): Topic
-    updateTopic(input: MutateTopicInput!): Topic
+    createTopic(input: CreateTopicInput!): TopicDescription
+    updateTopic(input: MutateTopicInput!): TopicDescription
     deleteTopic(name: String!): String
 }
 
 extend type Query {
     topicList(filter: String): [TopicOnlyName!]
-    topic(name: String!): Topic!
+    topicDescription(name: String!): TopicDescription!
 }

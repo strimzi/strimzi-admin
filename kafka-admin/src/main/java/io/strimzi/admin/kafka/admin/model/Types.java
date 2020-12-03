@@ -10,11 +10,12 @@ public class Types {
         public void setName(String name) { this.name = name; }
     }
 
-    public static class Topic {
+    public static class TopicDescription {
         private String name;
+        private List<Partitions> partitions;
         private TopicConfig config;
 
-        public Topic() {}
+        public TopicDescription() {}
 
         public String getName() {
             return this.name;
@@ -31,15 +32,14 @@ public class Types {
         public void setConfig(TopicConfig config) {
             this.config = config;
         }
-    }
 
-    public static class QueryGetTopicArgs {
-        private String name;
+        public List<Partitions> getPartitions() {
+            return partitions;
+        }
 
-        public QueryGetTopicArgs() {}
-
-        public String getName() { return this.name; }
-        public void setName(String name) { this.name = name; }
+        public void setPartitions(List<Partitions> partitions) {
+            this.partitions = partitions;
+        }
     }
 
     public static class CreateOrMutateTopicConfigInput {
@@ -64,7 +64,7 @@ public class Types {
             return replicationFactor;
         }
 
-        public void setreplicationFactor(Long replicationFactor) {
+        public void setReplicationFactor(Long replicationFactor) {
             this.replicationFactor = replicationFactor;
         }
 
@@ -143,16 +143,16 @@ public class Types {
     }
 
     public static class Replicas {
-        private Boolean in_sync;
+        private Boolean inSync;
         private String id;
 
         public Replicas() {
         }
-        public Boolean getIn_sync() {
-            return in_sync;
+        public Boolean getInSync() {
+            return inSync;
         }
-        public void setIn_sync(Boolean in_sync) {
-            this.in_sync = in_sync;
+        public void setInSync(Boolean inSync) {
+            this.inSync = inSync;
         }
 
         public String getId() {
@@ -191,17 +191,14 @@ public class Types {
     public static class TopicConfig {
         private Long partitionCount;
         private Long replicationFactor;
+        private Long minInsyncReplicas;
         private Boolean isInternal;
-        private List<Partitions> partitions;
-
-        public TopicConfig() {
-        }
 
         public Long getPartitionCount() {
             return partitionCount;
         }
 
-        public void setpartitionCount(Long partitionCount) {
+        public void setPartitionCount(Long partitionCount) {
             this.partitionCount = partitionCount;
         }
 
@@ -213,20 +210,20 @@ public class Types {
             this.replicationFactor = replicationFactor;
         }
 
+        public Long getMinInsyncReplicas() {
+            return minInsyncReplicas;
+        }
+
+        public void setMinInsyncReplicas(Long minInsyncReplicas) {
+            this.minInsyncReplicas = minInsyncReplicas;
+        }
+
         public Boolean getIsInternal() {
             return isInternal;
         }
 
-        public void setIsInternal(Boolean isInternal) {
-            this.isInternal = isInternal;
-        }
-
-        public List<Partitions> getPartitions() {
-            return partitions;
-        }
-
-        public void setPartitions(List<Partitions> partitions) {
-            this.partitions = partitions;
+        public void setIsInternal(Boolean internal) {
+            isInternal = internal;
         }
     }
 }

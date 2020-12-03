@@ -34,7 +34,7 @@ public class TopicCreateHandler {
             }
             if (configObject.get("replicationFactor") != null) {
                 String val = configObject.get("replicationFactor").toString();
-                createOrMutateTopicConfigInput.setreplicationFactor(Long.parseLong(val));
+                createOrMutateTopicConfigInput.setReplicationFactor(Long.parseLong(val));
                 newTopic.setReplicationFactor(Short.parseShort(val));
             }
             if (configObject.get("retentionDays") != null) {
