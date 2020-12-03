@@ -43,21 +43,54 @@ public class Types {
     }
 
     public static class CreateOrMutateTopicConfigInput {
-        private Integer retentionDays;
-        private Integer partitionCount;
+        private Long partitionCount;
+        private Long replicationFactor;
+        private Boolean isInternal;
+
         private Integer minInSyncReplicas;
-        private Integer replicationFactor;
+        private Integer retentionDays;
 
         public CreateOrMutateTopicConfigInput() {}
 
-        public Integer getRetentionDays() { return this.retentionDays; }
-        public Integer getPartitionCount() { return this.partitionCount; }
-        public Integer getMinInSyncReplicas() { return this.minInSyncReplicas; }
-        public void setRetentionDays(Integer retentionDays) { this.retentionDays = retentionDays; }
-        public void setPartitionCount(Integer partitionCount) { this.partitionCount = partitionCount; }
-        public void setMinInSyncReplicas(Integer minInSyncReplicas) { this.minInSyncReplicas = minInSyncReplicas; }
-        public Integer getReplicationFactor() { return replicationFactor; }
-        public void setReplicationFactor(Integer replicationFactor) { this.replicationFactor = replicationFactor; }
+        public Long getPartitionCount() {
+            return partitionCount;
+        }
+
+        public void setPartitionCount(Long partitionCount) {
+            this.partitionCount = partitionCount;
+        }
+
+        public Long getReplicationFactor() {
+            return replicationFactor;
+        }
+
+        public void setreplicationFactor(Long replicationFactor) {
+            this.replicationFactor = replicationFactor;
+        }
+
+        public Boolean getIsInternal() {
+            return isInternal;
+        }
+
+        public void setIsInternal(Boolean isInternal) {
+            this.isInternal = isInternal;
+        }
+
+        public Integer getMinInSyncReplicas() {
+            return minInSyncReplicas;
+        }
+
+        public void setMinInSyncReplicas(Integer minInSyncReplicas) {
+            this.minInSyncReplicas = minInSyncReplicas;
+        }
+
+        public Integer getRetentionDays() {
+            return retentionDays;
+        }
+
+        public void setRetentionDays(Integer retentionDays) {
+            this.retentionDays = retentionDays;
+        }
     }
     public static class CreateTopicInput {
         private String name;
@@ -156,36 +189,36 @@ public class Types {
     }
 
     public static class TopicConfig {
-        private Long partition_count;
-        private Long replication_factor;
-        private Boolean is_internal;
+        private Long partitionCount;
+        private Long replicationFactor;
+        private Boolean isInternal;
         private List<Partitions> partitions;
 
         public TopicConfig() {
         }
 
-        public Long getPartition_count() {
-            return partition_count;
+        public Long getPartitionCount() {
+            return partitionCount;
         }
 
-        public void setPartition_count(Long partition_count) {
-            this.partition_count = partition_count;
+        public void setpartitionCount(Long partitionCount) {
+            this.partitionCount = partitionCount;
         }
 
-        public Long getReplication_factor() {
-            return replication_factor;
+        public Long getReplicationFactor() {
+            return replicationFactor;
         }
 
-        public void setReplication_factor(Long replication_factor) {
-            this.replication_factor = replication_factor;
+        public void setReplicationFactor(Long replicationFactor) {
+            this.replicationFactor = replicationFactor;
         }
 
-        public Boolean getIs_internal() {
-            return is_internal;
+        public Boolean getIsInternal() {
+            return isInternal;
         }
 
-        public void setIs_internal(Boolean is_internal) {
-            this.is_internal = is_internal;
+        public void setIsInternal(Boolean isInternal) {
+            this.isInternal = isInternal;
         }
 
         public List<Partitions> getPartitions() {

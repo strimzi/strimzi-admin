@@ -26,10 +26,10 @@ public class TopicHandler {
                 Types.Topic topic = new Types.Topic();
                 topic.setName(topicDesc.getName());
                 Types.TopicConfig tc = new Types.TopicConfig();
-                tc.setIs_internal(topicDesc.isInternal());
-                tc.setPartition_count(topicDesc.getPartitions().stream().count());
-                tc.setReplication_factor(topicDesc.getPartitions().get(0).getReplicas().stream().count());
-
+                tc.setIsInternal(topicDesc.isInternal());
+                tc.setpartitionCount(topicDesc.getPartitions().stream().count());
+                tc.setReplicationFactor(topicDesc.getPartitions().get(0).getReplicas().stream().count());
+                
                 List<Types.Partitions> partitionsList = new ArrayList<>();
                 topicDesc.getPartitions().forEach(part -> {
                     Types.Partitions partition = new Types.Partitions();

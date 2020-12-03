@@ -1,9 +1,6 @@
 type Topic {
     #id: ID
     name: String
-    partition_count: Int
-    replication_factor: Int
-    is_internal: Boolean
 
     """@transient"""
     partitions: [Partitions]
@@ -26,17 +23,18 @@ type TopicOnlyName {
 }
 
 type TopicConfig {
-    retentionDays: Int
     partitionCount: Int
-    minInSyncReplicas: Int
     replicationFactor: Int
+    isInternal: Boolean
+    partitions: [Partitions]
 }
 
 input CreateOrMutateTopicConfigInput {
     retentionDays: Int
-    partitionCount: Int
     minInSyncReplicas: Int
+    partitionCount: Int
     replicationFactor: Int
+    isInternal: Boolean
 }
 
 input CreateTopicInput {

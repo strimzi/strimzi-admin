@@ -29,12 +29,12 @@ public class TopicCreateHandler {
             }
             if (configObject.get("partitionCount") != null) {
                 String val = configObject.get("partitionCount").toString();
-                createOrMutateTopicConfigInput.setPartitionCount(Integer.parseInt(val));
+                createOrMutateTopicConfigInput.setPartitionCount(Long.parseLong(val));
                 newTopic.setNumPartitions(Integer.parseInt(val));
             }
             if (configObject.get("replicationFactor") != null) {
                 String val = configObject.get("replicationFactor").toString();
-                createOrMutateTopicConfigInput.setPartitionCount(Integer.parseInt(val));
+                createOrMutateTopicConfigInput.setreplicationFactor(Long.parseLong(val));
                 newTopic.setReplicationFactor(Short.parseShort(val));
             }
             if (configObject.get("retentionDays") != null) {

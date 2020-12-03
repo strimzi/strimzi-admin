@@ -1,107 +1,84 @@
 package io.strimzi.admin;
 
 import io.strimzi.admin.http.server.AdminServer;
-import io.vertx.config.ConfigRetriever;
-import io.vertx.config.ConfigRetrieverOptions;
-import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
-import org.apache.commons.cli.ParseException;
+import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.common.config.SslConfigs;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.DefaultParser;
 
-import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Main {
 
     private static final Logger LOGGER = LogManager.getLogger(Main.class);
+    private static final String PREFIX = "KAFKA_ADMIN_";
 
     /**
      * Main entrypoint.
      *
      * @param args the command line arguments
      */
-    public static void main(final String[] args) throws ParseException {
+    public static void main(final String[] args) throws Exception {
         LOGGER.info("AdminServer is starting.");
 
         final Vertx vertx = Vertx.vertx();
-        run(vertx, args)
+        run(vertx)
             .onFailure(throwable -> {
                 LOGGER.atFatal().withThrowable(throwable).log("AdminServer startup failed.");
                 System.exit(1);
             });
     }
 
-    static Future<String> run(final Vertx vertx, String[] args) throws ParseException {
+    static Future<String> run(final Vertx vertx) throws Exception {
         final Promise<String> promise = Promise.promise();
 
-        parseConfig(vertx, args).getConfig(ar -> {
-            if (ar.succeeded()) {
-                final AdminServer adminServer = new AdminServer(ar.result().getMap());
-                vertx.deployVerticle(adminServer,
-                    res -> {
-                        if (res.failed()) {
-                            LOGGER.atFatal().withThrowable(res.cause()).log("AdminServer verticle failed to start");
-                        }
-                        promise.handle(res);
-                    }
-                );
-            } else {
-                promise.fail("Failed to parse configuration. Reason: " + ar.cause().getMessage());
+        final AdminServer adminServer = new AdminServer(envVarsToAdminClientConfig());
+        vertx.deployVerticle(adminServer,
+            res -> {
+                if (res.failed()) {
+                    LOGGER.atFatal().withThrowable(res.cause()).log("AdminServer verticle failed to start");
+                }
+                promise.handle(res);
             }
-        });
+        );
 
         return promise.future();
     }
 
-    private static ConfigRetriever parseConfig(Vertx vertx, String[] args) throws ParseException {
-        CommandLine commandLine = new DefaultParser().parse(generateOptions(), args);
+    private static Map envVarsToAdminClientConfig() throws Exception {
+        Map envConfig = System.getenv().entrySet().stream().filter(entry -> entry.getKey().startsWith(PREFIX))
+                .collect(Collectors.toMap(entry -> entry.getKey().substring(PREFIX.length()), Map.Entry::getValue));
 
-        ConfigStoreOptions fileStore = new ConfigStoreOptions()
-                .setType("file")
-                .setFormat("properties")
-                .setConfig(new JsonObject().put("path", absoluteFilePath(commandLine.getOptionValue("config-file"))).put("raw-data", true));
+        Map<String, String> adminClientConfig = new HashMap();
+        if (envConfig.get("BOOTSTRAP_SERVERS") == null) {
+            throw new Exception("Bootstrap address has to be specified");
+        }
+        adminClientConfig.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, envConfig.get("BOOTSTRAP_SERVERS").toString());
 
-        ConfigStoreOptions envStore = new ConfigStoreOptions()
-                .setType("env")
-                .setConfig(new JsonObject().put("raw-data", true));
+        if (envConfig.get("SSL_KEYSTORE_LOCATION") != null && envConfig.get("SSL_KEYSTORE_PASSWORD") != null) {
+            adminClientConfig.put(SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG, envConfig.get("SSL_KEYSTORE_LOCATION").toString());
+            adminClientConfig.put(SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG, envConfig.get("SSL_KEYSTORE_PASSWORD").toString());
+            adminClientConfig.put(SslConfigs.SSL_KEYSTORE_TYPE_CONFIG, "PKCS12");
+        }
 
-        ConfigRetrieverOptions options = new ConfigRetrieverOptions()
-                .addStore(fileStore)
-                .addStore(envStore);
+        if (envConfig.get("SSL_TRUSTSTORE_LOCATION") != null && envConfig.get("SSL_TRUSTSTORE_PASSWORD") != null) {
+            adminClientConfig.put(AdminClientConfig.SECURITY_PROTOCOL_CONFIG, "SSL");
+            adminClientConfig.put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, envConfig.get("SSL_TRUSTSTORE_LOCATION").toString());
+            adminClientConfig.put(SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG, envConfig.get("SSL_TRUSTSTORE_PASSWORD").toString());
+            adminClientConfig.put(SslConfigs.SSL_TRUSTSTORE_TYPE_CONFIG, "PKCS12");
+        }
 
-        ConfigRetriever retriever = ConfigRetriever.create(vertx, options);
-        return retriever;
+        adminClientConfig.put(AdminClientConfig.METADATA_MAX_AGE_CONFIG, "30000");
+        adminClientConfig.put(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, "10000");
+        adminClientConfig.put(AdminClientConfig.RETRIES_CONFIG, "3");
+        adminClientConfig.put(AdminClientConfig.DEFAULT_API_TIMEOUT_MS_CONFIG, "40000");
 
-    }
 
-    private static String absoluteFilePath(String arg) {
-        // return the file path as absolute (if it's relative)
-        return arg.startsWith(File.separator) ? arg : System.getProperty("user.dir") + File.separator + arg;
-    }
-
-    /**
-     * Generate the command line options
-     *
-     * @return command line options
-     */
-    private static Options generateOptions() {
-
-        Option configFileOption = Option.builder()
-                .required(true)
-                .hasArg(true)
-                .longOpt("config-file")
-                .desc("Configuration file with bridge parameters")
-                .build();
-
-        Options options = new Options();
-        options.addOption(configFileOption);
-        return options;
+        return adminClientConfig;
     }
 }

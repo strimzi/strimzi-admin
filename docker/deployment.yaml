@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: strimzi-admin
+  labels:
+    app: strimzi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: strimzi-admin
+      strimzi.io/kind: strimzi-admin
+  template:
+    metadata:
+      labels:
+        name: strimzi-admin
+        strimzi.io/kind: strimzi-admin
+    spec:
+      containers:
+        - name: strimzi-cluster-operator
+          image: quay.io/sknot/strimzi-admin:latest
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: KAFKA_ADMIN_BOOTSTRAP_SERVERS
+              value: "my-cluster-kafka-bootstrap:9092"
+            - name: VERTXWEB_ENVIRONMENT
+              value: "dev"
