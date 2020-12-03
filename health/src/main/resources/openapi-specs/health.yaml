@@ -1,0 +1,43 @@
+openapi: 3.0.0
+info:
+  title: Strimzi Kubernetes Health API
+  version: 0.1.0
+  description: An API to provide k8s health endpoints for query
+paths:
+  "/status":
+    #==============================#
+    # GET /status
+    #==============================#
+    get:
+      operationId: status
+      summary: Get server status
+      description: A general server status endpoint.
+      responses:
+        "200":
+          description: The current server status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response"
+  "/liveness":
+    #==============================#
+    # GET /liveness
+    #==============================#
+    get:
+      operationId: liveness
+      summary: Get server liveness
+      description: Use this endpoint for k8s liveness probes.
+      responses:
+        "200":
+          description: The current server liveness state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response"
+components:
+  schemas:
+    response:
+      type: object
+      properties:
+        status:
+          type: string
