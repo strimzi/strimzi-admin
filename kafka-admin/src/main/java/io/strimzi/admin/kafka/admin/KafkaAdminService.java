@@ -1,3 +1,7 @@
+/*
+ * Copyright Strimzi authors.
+ * License: Apache License 2.0 (see the file LICENSE or http://apache.org/licenses/LICENSE-2.0.html).
+ */
 package io.strimzi.admin.kafka.admin;
 
 import graphql.schema.idl.RuntimeWiring;
@@ -46,29 +50,28 @@ public class KafkaAdminService implements GraphQLRegistration {
 
                 final TypeDefinitionRegistry typeDefinitionRegistry = schemaParser.parse(userInputStream);
                 p.complete(typeDefinitionRegistry);
-            }
-            catch (Exception exc) {
+            } catch (Exception exc) {
                 p.fail(exc);
             }
         }, ar -> {
-            final TypeDefinitionRegistry schema = (TypeDefinitionRegistry) ar.result();
+                final TypeDefinitionRegistry schema = (TypeDefinitionRegistry) ar.result();
 
-            AdminClientProvider acp = new AdminClientProvider(vertx, config);
-            acp.open();
-            // todo close acp
-            final RuntimeWiring query = RuntimeWiring.newRuntimeWiring()
-                .type("Query", typeWiring -> typeWiring
-                    .dataFetcher("topicDescription", TopicDescriptionHandler.topicDescriptionFetch(acp))
-                    .dataFetcher("topicList", TopicListHandler.topicListFetch(acp))
-                )
-                .type("Mutation", typeWiring -> typeWiring
-                        .dataFetcher("deleteTopic", TopicDeleteHandler.deleteTopic(acp))
-                        .dataFetcher("createTopic", TopicCreateHandler.createTopic(acp))
-                )
-                .build();
+                AdminClientProvider acp = new AdminClientProvider(vertx, config);
+                acp.open();
+                // todo close acp
+                final RuntimeWiring query = RuntimeWiring.newRuntimeWiring()
+                    .type("Query", typeWiring -> typeWiring
+                        .dataFetcher("topicDescription", TopicDescriptionHandler.topicDescriptionFetch(acp))
+                        .dataFetcher("topicList", TopicListHandler.topicListFetch(acp))
+                    )
+                    .type("Mutation", typeWiring -> typeWiring
+                            .dataFetcher("deleteTopic", TopicDeleteHandler.deleteTopic(acp))
+                            .dataFetcher("createTopic", TopicCreateHandler.createTopic(acp))
+                    )
+                    .build();
 
-            promise.complete(GraphQLRegistrationDescriptor.create(schema, query));
-        });
+                promise.complete(GraphQLRegistrationDescriptor.create(schema, query));
+            });
 
         return promise.future();
     }

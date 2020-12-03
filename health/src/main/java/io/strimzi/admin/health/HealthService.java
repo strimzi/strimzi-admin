@@ -1,3 +1,7 @@
+/*
+ * Copyright Strimzi authors.
+ * License: Apache License 2.0 (see the file LICENSE or http://apache.org/licenses/LICENSE-2.0.html).
+ */
 package io.strimzi.admin.health;
 
 import io.strimzi.admin.http.server.registration.RouteRegistration;
@@ -27,8 +31,7 @@ public class HealthService implements RouteRegistration {
                 OpenAPI3RouterFactory routerFactory = ar.result();
                 assignRoutes(routerFactory);
                 promise.complete(RouteRegistrationDescriptor.create("/health", routerFactory.getRouter()));
-            }
-            else {
+            } else {
                 promise.fail(ar.cause());
             }
         });
@@ -37,7 +40,7 @@ public class HealthService implements RouteRegistration {
     }
 
     private void assignRoutes(final OpenAPI3RouterFactory routerFactory) {
-            routerFactory.addHandlerByOperationId("status", rc -> rc.response().end(SUCCESS_RESPONSE));
-            routerFactory.addHandlerByOperationId("liveness", rc -> rc.response().end(SUCCESS_RESPONSE));
+        routerFactory.addHandlerByOperationId("status", rc -> rc.response().end(SUCCESS_RESPONSE));
+        routerFactory.addHandlerByOperationId("liveness", rc -> rc.response().end(SUCCESS_RESPONSE));
     }
 }

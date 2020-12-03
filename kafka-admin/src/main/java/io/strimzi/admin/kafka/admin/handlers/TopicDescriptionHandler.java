@@ -1,3 +1,7 @@
+/*
+ * Copyright Strimzi authors.
+ * License: Apache License 2.0 (see the file LICENSE or http://apache.org/licenses/LICENSE-2.0.html).
+ */
 package io.strimzi.admin.kafka.admin.handlers;
 
 import io.strimzi.admin.kafka.admin.AdminClientProvider;
@@ -17,7 +21,7 @@ import java.util.Map;
 public class TopicDescriptionHandler {
 
     public static VertxDataFetcher topicDescriptionFetch(AdminClientProvider acp) {
-        VertxDataFetcher<Types.TopicDescription> dataFetcher = new VertxDataFetcher<>((environment, prom)-> {
+        VertxDataFetcher<Types.TopicDescription> dataFetcher = new VertxDataFetcher<>((environment, prom) -> {
             String topicToDescribe = environment.getArgument("name");
             if (topicToDescribe == null || topicToDescribe.isEmpty()) {
                 prom.fail("Topic to describe has not been specified");

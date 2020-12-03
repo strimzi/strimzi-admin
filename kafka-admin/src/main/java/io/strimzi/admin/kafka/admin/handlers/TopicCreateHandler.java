@@ -1,3 +1,7 @@
+/*
+ * Copyright Strimzi authors.
+ * License: Apache License 2.0 (see the file LICENSE or http://apache.org/licenses/LICENSE-2.0.html).
+ */
 package io.strimzi.admin.kafka.admin.handlers;
 
 import io.strimzi.admin.kafka.admin.AdminClientProvider;
@@ -19,7 +23,7 @@ public class TopicCreateHandler {
             Map<String, Object> input = environment.getArgument("input");
             newTopic.setName(input.get("name").toString());
             Map<String, String> config = new HashMap<>();
-            Map<String, Object> configObject = (Map<String, Object>)input.get("config");
+            Map<String, Object> configObject = (Map<String, Object>) input.get("config");
             Types.CreateTopicInput createTopicInput = new Types.CreateTopicInput();
             createTopicInput.setName(input.get("name").toString());
             Types.CreateOrMutateTopicConfigInput createOrMutateTopicConfigInput = new Types.CreateOrMutateTopicConfigInput();

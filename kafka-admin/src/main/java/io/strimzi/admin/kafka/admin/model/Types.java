@@ -1,3 +1,7 @@
+/*
+ * Copyright Strimzi authors.
+ * License: Apache License 2.0 (see the file LICENSE or http://apache.org/licenses/LICENSE-2.0.html).
+ */
 package io.strimzi.admin.kafka.admin.model;
 
 import java.util.List;
@@ -6,8 +10,12 @@ public class Types {
     public static class TopicOnlyName {
         private String name;
         public TopicOnlyName() {}
-        public String getName() { return this.name; }
-        public void setName(String name) { this.name = name; }
+        public String getName() {
+            return this.name;
+        }
+        public void setName(String name) {
+            this.name = name;
+        }
     }
 
     public static class TopicDescription {
@@ -96,50 +104,73 @@ public class Types {
         private String name;
         private CreateOrMutateTopicConfigInput config;
 
-        public CreateTopicInput() {}
-
-        public String getName() { return this.name; }
-        public CreateOrMutateTopicConfigInput getConfig() { return this.config; }
-        public void setName(String name) { this.name = name; }
-        public void setConfig(CreateOrMutateTopicConfigInput config) { this.config = config; }
+        public String getName() {
+            return this.name;
+        }
+        public CreateOrMutateTopicConfigInput getConfig() {
+            return this.config;
+        }
+        public void setName(String name) {
+            this.name = name;
+        }
+        public void setConfig(CreateOrMutateTopicConfigInput config) {
+            this.config = config;
+        }
     }
     public static class MutationCreateTopicArgs {
         private CreateTopicInput input;
 
         public MutationCreateTopicArgs() {}
 
-        public CreateTopicInput getInput() { return this.input; }
-        public void setInput(CreateTopicInput input) { this.input = input; }
+        public CreateTopicInput getInput() {
+            return this.input;
+        }
+        public void setInput(CreateTopicInput input) {
+            this.input = input;
+        }
     }
     public static class MutationUpdateTopicArgs {
         private MutateTopicInput input;
 
         public MutationUpdateTopicArgs() {}
 
-        public MutateTopicInput getInput() { return this.input; }
-        public void setInput(MutateTopicInput input) { this.input = input; }
+        public MutateTopicInput getInput() {
+            return this.input;
+        }
+        public void setInput(MutateTopicInput input) {
+            this.input = input;
+        }
     }
     public static class MutationDeleteTopicArgs {
         private MutateTopicInput input;
 
         public MutationDeleteTopicArgs() {}
 
-        public MutateTopicInput getInput() { return this.input; }
-        public void setInput(MutateTopicInput input) { this.input = input; }
+        public MutateTopicInput getInput() {
+            return this.input;
+        }
+        public void setInput(MutateTopicInput input) {
+            this.input = input;
+        }
     }
     public static class MutateTopicInput {
-        //private Object id;
         private String name;
         private CreateOrMutateTopicConfigInput config;
 
         public MutateTopicInput() {}
 
-        //public Object getId() { return this.id; }
-        public String getName() { return this.name; }
-        public CreateOrMutateTopicConfigInput getConfig() { return this.config; }
-        //public void setId(Object id) { this.id = id; }
-        public void setName(String name) { this.name = name; }
-        public void setConfig(CreateOrMutateTopicConfigInput config) { this.config = config; }
+        public String getName() {
+            return this.name;
+        }
+        public CreateOrMutateTopicConfigInput getConfig() {
+            return this.config;
+        }
+        public void setName(String name) {
+            this.name = name;
+        }
+        public void setConfig(CreateOrMutateTopicConfigInput config) {
+            this.config = config;
+        }
     }
 
     public static class Replicas {
@@ -162,7 +193,6 @@ public class Types {
         public void setId(String id) {
             this.id = id;
         }
-
     }
 
     public static class Partitions {
