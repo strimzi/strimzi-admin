@@ -27,6 +27,7 @@
         <vertx.version>3.9.4</vertx.version>
         <log4j.version>2.14.0</log4j.version>
         <graphql-java.version>16.1</graphql-java.version>
+        <graphql-java-extended.version>15.0.0</graphql-java-extended.version>
         <kafka.version>2.6.0</kafka.version>
         <!-- Plugin Versions -->
         <maven.compiler.version>3.8.1</maven.compiler.version>
@@ -75,6 +76,11 @@
                 <groupId>org.apache.kafka</groupId>
                 <artifactId>kafka-clients</artifactId>
                 <version>${kafka.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.graphql-java</groupId>
+                <artifactId>graphql-java-extended-scalars</artifactId>
+                <version>${graphql-java-extended.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

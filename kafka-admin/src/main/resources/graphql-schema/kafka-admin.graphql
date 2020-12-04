@@ -1,3 +1,17 @@
+extend type Mutation {
+    createTopic(input: CreateTopicInput!): TopicDescription
+    updateTopic(input: MutateTopicInput!): TopicDescription
+    deleteTopic(name: String!): String
+}
+
+
+extend type Query {
+    topicList(filter: JSON): [TopicOnlyName!]
+    topicDescription(name: String!): TopicDescription!
+}
+
+scalar JSON
+
 type TopicDescription {
     #id: ID
     name: String
@@ -57,15 +71,4 @@ input MutateTopicInput {
     #id: ID!
     name: String!
     config: CreateOrMutateTopicConfigInput
-}
-
-extend type Mutation {
-    createTopic(input: CreateTopicInput!): TopicDescription
-    updateTopic(input: MutateTopicInput!): TopicDescription
-    deleteTopic(name: String!): String
-}
-
-extend type Query {
-    topicList(filter: String): [TopicOnlyName!]
-    topicDescription(name: String!): TopicDescription!
 }

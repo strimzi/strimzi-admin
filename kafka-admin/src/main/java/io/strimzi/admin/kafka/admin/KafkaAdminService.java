@@ -4,6 +4,7 @@
  */
 package io.strimzi.admin.kafka.admin;
 
+import graphql.scalars.ExtendedScalars;
 import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
@@ -58,7 +59,6 @@ public class KafkaAdminService implements GraphQLRegistration {
 
                 AdminClientProvider acp = new AdminClientProvider(vertx, config);
                 acp.open();
-                // todo close acp
                 final RuntimeWiring query = RuntimeWiring.newRuntimeWiring()
                     .type("Query", typeWiring -> typeWiring
                         .dataFetcher("topicDescription", TopicDescriptionHandler.topicDescriptionFetch(acp))
@@ -68,6 +68,7 @@ public class KafkaAdminService implements GraphQLRegistration {
                             .dataFetcher("deleteTopic", TopicDeleteHandler.deleteTopic(acp))
                             .dataFetcher("createTopic", TopicCreateHandler.createTopic(acp))
                     )
+                    .scalar(ExtendedScalars.Json)
                     .build();
 
                 promise.complete(GraphQLRegistrationDescriptor.create(schema, query));
