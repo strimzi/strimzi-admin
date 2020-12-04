@@ -27,3 +27,19 @@ spec:
               value: "my-cluster-kafka-bootstrap:9092"
             - name: VERTXWEB_ENVIRONMENT
               value: "dev"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: strimzi-admin-service
+  labels:
+    app: strimzi
+spec:
+  ports:
+    - name: admin
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    name: strimzi-admin
+  type: ClusterIP
