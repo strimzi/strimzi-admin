@@ -1,7 +1,7 @@
 extend type Mutation {
     createTopic(input: CreateTopicInput!): TopicDescription
     updateTopic(input: MutateTopicInput!): TopicDescription
-    deleteTopic(name: String!): String
+    deleteTopic(name: String!): TopicOnlyName
 }
 
 
@@ -15,27 +15,28 @@ scalar JSON
 type TopicDescription {
     #id: ID
     name: String
-
-    """@transient"""
     partitions: [Partitions]
     config: TopicConfig
 }
 
+""" embedded """
 type Partitions {
     partition: Int
     replicas: [Replicas]
 }
 
+""" embedded """
 type Replicas {
     id: String
     inSync: Boolean
 }
 
+""" embedded """
 type TopicOnlyName {
     #id: ID
     name: String
 }
-
+""" embedded """
 type TopicConfig {
     partitionCount: Int
     replicationFactor: Int
@@ -45,11 +46,13 @@ type TopicConfig {
     pairs: [ConfigEntry]
 }
 
+""" embedded """
 type ConfigEntry {
     key: String
     value: String
 }
 
+""" embedded """
 input ConfigEntryInput {
     key: String
     value: String

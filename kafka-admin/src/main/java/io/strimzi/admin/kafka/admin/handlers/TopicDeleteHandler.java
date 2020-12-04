@@ -10,23 +10,22 @@ import io.vertx.core.Promise;
 import io.vertx.ext.web.handler.graphql.VertxDataFetcher;
 import io.vertx.ext.web.impl.RoutingContextWrapper;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 
 public class TopicDeleteHandler {
 
     public static VertxDataFetcher deleteTopic(AdminClientProvider acp) {
-        VertxDataFetcher<String> dataFetcher = new VertxDataFetcher<>((environment, prom) -> {
+        VertxDataFetcher<Types.TopicOnlyName> dataFetcher = new VertxDataFetcher<>((environment, prom) -> {
             RoutingContextWrapper routingContext = environment.getContext();
             routingContext.request().headers().get("token");
 
             Promise deleteTopicPromise = Promise.promise();
             String topicToDelete = environment.getArgument("name");
             acp.deleteTopic(Collections.singletonList(topicToDelete), deleteTopicPromise);
-            List<Types.TopicOnlyName> list = new ArrayList<>();
             deleteTopicPromise.future().onComplete(topics -> {
-                prom.complete(topicToDelete);
+                Types.TopicOnlyName topicOnlyName = new Types.TopicOnlyName();
+                topicOnlyName.setName(topicToDelete);
+                prom.complete(topicOnlyName);
             });
         });
         return dataFetcher;
