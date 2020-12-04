@@ -1,77 +1,71 @@
-extend type Mutation {
-    createTopic(input: CreateTopicInput!): TopicDescription
-    updateTopic(input: MutateTopicInput!): TopicDescription
-    deleteTopic(name: String!): TopicOnlyName
-}
-
-
 extend type Query {
-    topicList(filter: JSON): [TopicOnlyName!]
-    topicDescription(name: String!): TopicDescription!
+    """ search: can contain any form of Kafka topic name """
+    topicList(search: String, page: PageRequest, orderBy: OrderByInput): TopicList
+    topic(name: String!): Topic!
 }
 
-scalar JSON
+extend type Mutation {
+    createTopic(input: NewTopic!): Topic!
+    deleteTopics(names: [String]): [String]
+}
 
-type TopicDescription {
-    #id: ID
+type Topic {
+    """ID"""
     name: String
-    partitions: [Partitions]
-    config: TopicConfig
+    isInternal: Boolean
+    partitions: [Partition!]!
+    config: [ConfigEntry]
 }
 
-""" embedded """
-type Partitions {
+"""embedded in Topic"""
+type Partition {
+    """ID"""
     partition: Int
-    replicas: [Replicas]
+    replicas: [Node!]!
+    """InSyncReplicas"""
+    isr: [Node]
+    leader: Node
 }
 
-""" embedded """
-type Replicas {
-    id: String
-    inSync: Boolean
+type Node {
+    id: Int!
 }
 
-""" embedded """
-type TopicOnlyName {
-    #id: ID
-    name: String
-}
-""" embedded """
-type TopicConfig {
-    partitionCount: Int
-    replicationFactor: Int
-    isInternal: Boolean
-    # config
-    minInsyncReplicas: Int
-    pairs: [ConfigEntry]
-}
-
-""" embedded """
 type ConfigEntry {
+    key: String!
+    value: String!
+}
+
+input OrderByInput {
+    field: String!
+    order: SortDirectionEnum = ASC
+}
+
+input PageRequest {
+    limit: Int
+    offset: Int
+}
+
+enum SortDirectionEnum {
+    DESC
+    ASC
+}
+
+type TopicList {
+    items: [Topic]!
+    offset: Int
+    limit: Int
+    count: Int
+}
+
+input NewTopicConfigEntry {
     key: String
     value: String
 }
 
-""" embedded """
-input ConfigEntryInput {
-    key: String
-    value: String
-}
-
-input CreateOrMutateTopicConfigInput {
-    partitionCount: Int
-    replicationFactor: Int
-    isInternal: Boolean
-    pairs: [ConfigEntryInput]
-}
-
-input CreateTopicInput {
-    name: String
-    config: CreateOrMutateTopicConfigInput
-}
-
-input MutateTopicInput {
-    #id: ID!
+input NewTopic {
     name: String!
-    config: CreateOrMutateTopicConfigInput
+    numPartitions: Int!
+    replicationFactor: Int!
+    config: [NewTopicConfigEntry]
 }

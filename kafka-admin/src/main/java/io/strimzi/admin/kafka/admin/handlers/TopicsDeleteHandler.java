@@ -5,27 +5,26 @@
 package io.strimzi.admin.kafka.admin.handlers;
 
 import io.strimzi.admin.kafka.admin.AdminClientProvider;
-import io.strimzi.admin.kafka.admin.model.Types;
 import io.vertx.core.Promise;
 import io.vertx.ext.web.handler.graphql.VertxDataFetcher;
 import io.vertx.ext.web.impl.RoutingContextWrapper;
 
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.List;
 
-public class TopicDeleteHandler {
+public class TopicsDeleteHandler {
 
-    public static VertxDataFetcher deleteTopic(AdminClientProvider acp) {
-        VertxDataFetcher<Types.TopicOnlyName> dataFetcher = new VertxDataFetcher<>((environment, prom) -> {
+    public static VertxDataFetcher deleteTopics(AdminClientProvider acp) {
+        VertxDataFetcher<List<String>> dataFetcher = new VertxDataFetcher<>((environment, prom) -> {
             RoutingContextWrapper routingContext = environment.getContext();
             routingContext.request().headers().get("token");
 
             Promise deleteTopicPromise = Promise.promise();
-            String topicToDelete = environment.getArgument("name");
-            acp.deleteTopic(Collections.singletonList(topicToDelete), deleteTopicPromise);
+            List<String> names = environment.getArgument("names");
+            List<String> topicsToDelete = Arrays.asList(names.get(0).split(","));
+            acp.deleteTopics(topicsToDelete, deleteTopicPromise);
             deleteTopicPromise.future().onComplete(topics -> {
-                Types.TopicOnlyName topicOnlyName = new Types.TopicOnlyName();
-                topicOnlyName.setName(topicToDelete);
-                prom.complete(topicOnlyName);
+                prom.complete(topicsToDelete);
             });
         });
         return dataFetcher;

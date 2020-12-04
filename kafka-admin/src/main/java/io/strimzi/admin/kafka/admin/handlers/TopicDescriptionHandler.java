@@ -21,7 +21,7 @@ import java.util.Map;
 public class TopicDescriptionHandler {
 
     public static VertxDataFetcher topicDescriptionFetch(AdminClientProvider acp) {
-        VertxDataFetcher<Types.TopicDescription> dataFetcher = new VertxDataFetcher<>((environment, prom) -> {
+        VertxDataFetcher<Types.Topic> dataFetcher = new VertxDataFetcher<>((environment, prom) -> {
             String topicToDescribe = environment.getArgument("name");
             if (topicToDescribe == null || topicToDescribe.isEmpty()) {
                 prom.fail("Topic to describe has not been specified");
@@ -32,66 +32,58 @@ public class TopicDescriptionHandler {
             ConfigResource resource = new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, topicToDescribe);
             Promise<Map<ConfigResource, Config>> describeTopicConfigPromise = Promise.promise();
 
-            describeTopicsPromise.future().<Types.TopicDescription>compose(topics -> {
+            describeTopicsPromise.future().<Types.Topic>compose(topics -> {
                 io.vertx.kafka.admin.TopicDescription topicDesc = topics.get(topicToDescribe);
-                Types.TopicDescription topicDescription = new Types.TopicDescription();
-                topicDescription.setName(topicDesc.getName());
-                Types.TopicConfig tc = new Types.TopicConfig();
-                tc.setIsInternal(topicDesc.isInternal());
-                tc.setPartitionCount(topicDesc.getPartitions().stream().count());
-                tc.setReplicationFactor(topicDesc.getPartitions().get(0).getReplicas().stream().count());
-                List<Types.Partitions> partitionsList = new ArrayList<>();
+                Types.Topic topic = new Types.Topic();
+                topic.setName(topicDesc.getName());
+                topic.setIsInternal(topicDesc.isInternal());
+                List<Types.Partition> partitions = new ArrayList<>();
                 topicDesc.getPartitions().forEach(part -> {
-                    Types.Partitions partition = new Types.Partitions();
-                    partition.setPartition(part.getPartition());
-                    List<Types.Replicas> replicasList = new ArrayList<>();
+                    Types.Partition partition = new Types.Partition();
+                    Types.Node leader = new Types.Node();
+                    leader.setId(part.getLeader().getId());
 
-                    // set all replicas in sync to false
-                    part.getReplicas().forEach(replica -> {
-                        Types.Replicas replicas = new Types.Replicas();
-                        replicas.setId(replica.getIdString());
-                        replicas.setInSync(false);
-                        replicasList.add(replicas);
+                    List<Types.Node> replicas = new ArrayList<>();
+                    part.getReplicas().forEach(rep -> {
+                        Types.Node replica = new Types.Node();
+                        replica.setId(rep.getId());
+                        replicas.add(replica);
                     });
-                    partition.setReplicas(replicasList);
-                    // set all in sync replicas to true
-                    part.getIsr().forEach(replica -> {
-                        partition.getReplicas().get(replica.getId()).setInSync(true);
+
+                    List<Types.Node> inSyncReplicas = new ArrayList<>();
+                    part.getIsr().forEach(isr -> {
+                        Types.Node inSyncReplica = new Types.Node();
+                        inSyncReplica.setId(isr.getId());
+                        inSyncReplicas.add(inSyncReplica);
                     });
-                    partitionsList.add(partition);
+
+                    partition.setPartition(partition.getPartition());
+                    partition.setLeader(leader);
+                    partition.setReplicas(replicas);
+                    partition.setIsr(inSyncReplicas);
+                    partitions.add(partition);
                 });
-                topicDescription.setPartitions(partitionsList);
-                topicDescription.setConfig(tc);
-                return Future.succeededFuture(topicDescription);
+                topic.setPartitions(partitions);
+                return Future.succeededFuture(topic);
             }).onComplete(topic -> {
-                Types.TopicDescription t = topic.result();
-                Types.TopicConfig tc = topic.result().getConfig();
+                Types.Topic t = topic.result();
 
                 acp.describeConfigs(Collections.singletonList(resource), describeTopicConfigPromise);
                 describeTopicConfigPromise.future().onComplete(topics -> {
                     Config cfg = topics.result().get(resource);
                     List<ConfigEntry> entries = cfg.getEntries();
 
-                    // way 1 to fill $set od properties
-                    // what is the $set?
-                    //tc.setRetentionMs("retentionMs", entries.stream().filter(nts -> nts.getName().equals("retention.ms")).findFirst().get().getValue());
-                    tc.setMinInsyncReplicas(Long.parseLong(entries.stream().filter(nts -> nts.getName().equals("min.insync.replicas")).findFirst().get().getValue()));
-
-                    List<Types.TopicConfigEntry> topicConfigEntries = new ArrayList<>();
+                    List<Types.ConfigEntry> topicConfigEntries = new ArrayList<>();
                     // way2 put there everything
                     entries.stream().forEach(entry -> {
-                        Types.TopicConfigEntry tce = new Types.TopicConfigEntry();
-                        tce.setKey(entry.getName());
-                        tce.setValue(entry.getValue());
-                        topicConfigEntries.add(tce);
+                        Types.ConfigEntry ce = new Types.ConfigEntry();
+                        ce.setKey(entry.getName());
+                        ce.setValue(entry.getValue());
+                        topicConfigEntries.add(ce);
                     });
-                    tc.setPairs(topicConfigEntries);
-
-                    t.setConfig(tc);
+                    t.setConfig(topicConfigEntries);
                     prom.complete(t);
                 });
-
-
             });
         });
         return dataFetcher;

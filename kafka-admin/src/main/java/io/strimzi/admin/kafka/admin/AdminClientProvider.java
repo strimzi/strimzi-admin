@@ -58,7 +58,11 @@ public class AdminClientProvider {
         Properties props = new Properties();
         props.putAll(kafkaConfig);
 
-        this.adminClient = KafkaAdminClient.create(this.vertx, props);
+        try {
+            this.adminClient = KafkaAdminClient.create(this.vertx, props);
+        } catch (Exception e) {
+            System.exit(1);
+        }
     }
 
     public void close() {
@@ -87,8 +91,8 @@ public class AdminClientProvider {
     /**
      * Deletes a topic.
      */
-    public void deleteTopic(List<String> topics, Handler<AsyncResult<Void>> completionHandler) {
-        log.info("Delete topic");
+    public void deleteTopics(List<String> topics, Handler<AsyncResult<Void>> completionHandler) {
+        log.info("Delete topics");
         this.adminClient.deleteTopics(topics, completionHandler);
     }
 

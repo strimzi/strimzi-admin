@@ -19,40 +19,56 @@ import java.util.Map;
 public class TopicCreateHandler {
 
     public static VertxDataFetcher createTopic(AdminClientProvider acp) {
-        VertxDataFetcher<Types.CreateTopicInput> dataFetcher = new VertxDataFetcher<>((environment, prom) -> {
+        VertxDataFetcher<Types.Topic> dataFetcher = new VertxDataFetcher<>((environment, prom) -> {
 
-            NewTopic newTopic = new NewTopic();
+            NewTopic newKafkaTopic = new NewTopic();
+            Types.NewTopic inputTopic = new Types.NewTopic();
+
             Map<String, Object> input = environment.getArgument("input");
-            newTopic.setName(input.get("name").toString());
+            List<Map<String, Object>> inputConfig = (List<Map<String, Object>>) input.get("config");
+            List<Types.NewTopicConfigEntry> newTopicConfigEntries = new ArrayList<>();
+
+            inputConfig.forEach(entry -> {
+                Types.NewTopicConfigEntry newTopicConfigEntry = new Types.NewTopicConfigEntry();
+                newTopicConfigEntry.setKey(entry.get("key").toString());
+                newTopicConfigEntry.setValue(entry.get("value").toString());
+                newTopicConfigEntries.add(newTopicConfigEntry);
+            });
+
+            inputTopic.setConfig(newTopicConfigEntries);
+            inputTopic.setName(input.get("name").toString());
+            inputTopic.setNumPartitions(Integer.parseInt(input.get("numPartitions").toString()));
+            inputTopic.setReplicationFactor(Integer.parseInt(input.get("replicationFactor").toString()));
+
             Map<String, String> config = new HashMap<>();
-            Map<String, Object> configObject = (Map<String, Object>) input.get("config");
-            Types.CreateTopicInput createTopicInput = new Types.CreateTopicInput();
-            createTopicInput.setName(input.get("name").toString());
-            Types.CreateOrMutateTopicConfigInput createOrMutateTopicConfigInput = new Types.CreateOrMutateTopicConfigInput();
+            List<Types.NewTopicConfigEntry> configObject = inputTopic.getConfig();
+            configObject.forEach(item -> {
+                config.put(item.getKey(), item.getValue());
+            });
 
-            if (configObject.get("partitionCount") != null) {
-                String val = configObject.get("partitionCount").toString();
-                createOrMutateTopicConfigInput.setPartitionCount(Long.parseLong(val));
-                newTopic.setNumPartitions(Integer.parseInt(val));
-            }
-            if (configObject.get("replicationFactor") != null) {
-                String val = configObject.get("replicationFactor").toString();
-                createOrMutateTopicConfigInput.setReplicationFactor(Long.parseLong(val));
-                newTopic.setReplicationFactor(Short.parseShort(val));
-            }
-            if (configObject.get("pairs") != null) {
-                List<Map> list = (ArrayList) configObject.get("pairs");
-                list.forEach(entry -> {
-                    config.put(entry.get("key").toString(), entry.get("value").toString());
-                });
+            newKafkaTopic.setName(inputTopic.getName());
+            newKafkaTopic.setReplicationFactor(inputTopic.getReplicationFactor().shortValue());
+            newKafkaTopic.setNumPartitions(inputTopic.getNumPartitions());
+            if (config != null) {
+                newKafkaTopic.setConfig(config);
             }
 
-            createTopicInput.setConfig(createOrMutateTopicConfigInput);
-            newTopic.setConfig(config);
             Promise createTopicPromise = Promise.promise();
-            acp.createTopic(Collections.singletonList(newTopic), createTopicPromise);
-            createTopicPromise.future().onComplete(topics -> {
-                prom.complete(createTopicInput);
+            acp.createTopic(Collections.singletonList(newKafkaTopic), createTopicPromise);
+            createTopicPromise.future().onComplete(ignore -> {
+                Types.Topic topic = new Types.Topic();
+                List<Types.ConfigEntry> newConf = new ArrayList<>();
+                inputTopic.getConfig().forEach(in -> {
+                    Types.ConfigEntry configEntry = new Types.ConfigEntry();
+                    configEntry.setKey(in.getKey());
+                    configEntry.setValue(in.getValue());
+                    newConf.add(configEntry);
+                });
+
+                topic.setConfig(newConf);
+                topic.setName(inputTopic.getName());
+                // partitions and isInternal?
+                prom.complete(topic);
             });
         });
         return dataFetcher;

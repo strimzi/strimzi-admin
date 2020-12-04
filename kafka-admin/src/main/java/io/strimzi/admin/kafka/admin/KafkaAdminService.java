@@ -11,7 +11,7 @@ import graphql.schema.idl.TypeDefinitionRegistry;
 import io.strimzi.admin.graphql.registration.GraphQLRegistration;
 import io.strimzi.admin.graphql.registration.GraphQLRegistrationDescriptor;
 import io.strimzi.admin.kafka.admin.handlers.TopicCreateHandler;
-import io.strimzi.admin.kafka.admin.handlers.TopicDeleteHandler;
+import io.strimzi.admin.kafka.admin.handlers.TopicsDeleteHandler;
 import io.strimzi.admin.kafka.admin.handlers.TopicDescriptionHandler;
 import io.strimzi.admin.kafka.admin.handlers.TopicListHandler;
 import io.vertx.core.Future;
@@ -61,11 +61,11 @@ public class KafkaAdminService implements GraphQLRegistration {
                 acp.open();
                 final RuntimeWiring query = RuntimeWiring.newRuntimeWiring()
                     .type("Query", typeWiring -> typeWiring
-                        .dataFetcher("topicDescription", TopicDescriptionHandler.topicDescriptionFetch(acp))
+                        .dataFetcher("topic", TopicDescriptionHandler.topicDescriptionFetch(acp))
                         .dataFetcher("topicList", TopicListHandler.topicListFetch(acp))
                     )
                     .type("Mutation", typeWiring -> typeWiring
-                            .dataFetcher("deleteTopic", TopicDeleteHandler.deleteTopic(acp))
+                            .dataFetcher("deleteTopics", TopicsDeleteHandler.deleteTopics(acp))
                             .dataFetcher("createTopic", TopicCreateHandler.createTopic(acp))
                     )
                     .scalar(ExtendedScalars.Json)

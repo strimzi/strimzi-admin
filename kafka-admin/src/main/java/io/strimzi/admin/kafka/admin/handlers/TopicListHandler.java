@@ -14,12 +14,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class TopicListHandler {
 
     public static VertxDataFetcher topicListFetch(AdminClientProvider acp) {
-        VertxDataFetcher<List<Types.TopicOnlyName>> dataFetcher = new VertxDataFetcher<>((env, prom) -> {
+        VertxDataFetcher<Types.TopicList> dataFetcher = new VertxDataFetcher<>((env, prom) -> {
             RoutingContextWrapper routingContext = env.getContext();
             routingContext.request().headers().get("token");
 
@@ -27,24 +28,30 @@ public class TopicListHandler {
             acp.listTopics(describeTopicsNamesPromise);
             describeTopicsNamesPromise.future()
                     .onComplete(topics -> {
-                        List<Types.TopicOnlyName> topicNamesList = new ArrayList<>();
+                        Types.TopicList topicList = new Types.TopicList();
+                        List<Types.Topic> items = new ArrayList<>();
                         topics.result().forEach(top -> {
-                            Types.TopicOnlyName ton = new Types.TopicOnlyName();
-                            ton.setName(top);
-                            topicNamesList.add(ton);
+                            if (byTopicName(env.getArgument("search")).test(top)) {
+                                Types.Topic ton = new Types.Topic();
+                                ton.setName(top);
+                                items.add(ton);
+                            }
                         });
-                        prom.complete(topicNamesList.stream().filter(byTopicName(env.getArgument("name"))).collect(Collectors.toList()));
+                        topicList.setItems(items);
+                        prom.complete(topicList);
                     });
         });
         return dataFetcher;
     }
 
-    private static Predicate<Types.TopicOnlyName> byTopicName(String filterParameter) {
+    private static Predicate<String> byTopicName(String regexParam) {
         return topic -> {
-            if (filterParameter == null) {
+            if (regexParam == null) {
                 return true;
             } else {
-                return topic.getName().contains(filterParameter);
+                Pattern pattern = Pattern.compile(regexParam);
+                Matcher matcher = pattern.matcher(topic);
+                return matcher.find();
             }
         };
     }

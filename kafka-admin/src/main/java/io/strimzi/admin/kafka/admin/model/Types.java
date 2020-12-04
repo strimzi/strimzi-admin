@@ -7,191 +7,28 @@ package io.strimzi.admin.kafka.admin.model;
 import java.util.List;
 
 public class Types {
-    public static class TopicOnlyName {
-        private String name;
-        public TopicOnlyName() {}
-        public String getName() {
-            return this.name;
-        }
-        public void setName(String name) {
-            this.name = name;
-        }
-    }
 
-    public static class TopicDescription {
-        private String name;
-        private List<Partitions> partitions;
-        private TopicConfig config;
 
-        public TopicDescription() {}
+    public static class Node {
+        private Integer id;
 
-        public String getName() {
-            return this.name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public TopicConfig getConfig() {
-            return config;
-        }
-
-        public void setConfig(TopicConfig config) {
-            this.config = config;
-        }
-
-        public List<Partitions> getPartitions() {
-            return partitions;
-        }
-
-        public void setPartitions(List<Partitions> partitions) {
-            this.partitions = partitions;
-        }
-    }
-
-    public static class CreateOrMutateTopicConfigInput {
-        private Long partitionCount;
-        private Long replicationFactor;
-        private Boolean isInternal;
-
-        private List<TopicConfigEntry> pairs;
-
-        public CreateOrMutateTopicConfigInput() {}
-
-        public Long getPartitionCount() {
-            return partitionCount;
-        }
-
-        public void setPartitionCount(Long partitionCount) {
-            this.partitionCount = partitionCount;
-        }
-
-        public Long getReplicationFactor() {
-            return replicationFactor;
-        }
-
-        public void setReplicationFactor(Long replicationFactor) {
-            this.replicationFactor = replicationFactor;
-        }
-
-        public Boolean getIsInternal() {
-            return isInternal;
-        }
-
-        public void setIsInternal(Boolean isInternal) {
-            this.isInternal = isInternal;
-        }
-
-        public List<TopicConfigEntry> getPairs() {
-            return pairs;
-        }
-
-        public void setPairs(List<TopicConfigEntry> pairs) {
-            this.pairs = pairs;
-        }
-    }
-    public static class CreateTopicInput {
-        private String name;
-        private CreateOrMutateTopicConfigInput config;
-
-        public String getName() {
-            return this.name;
-        }
-        public CreateOrMutateTopicConfigInput getConfig() {
-            return this.config;
-        }
-        public void setName(String name) {
-            this.name = name;
-        }
-        public void setConfig(CreateOrMutateTopicConfigInput config) {
-            this.config = config;
-        }
-    }
-    public static class MutationCreateTopicArgs {
-        private CreateTopicInput input;
-
-        public MutationCreateTopicArgs() {}
-
-        public CreateTopicInput getInput() {
-            return this.input;
-        }
-        public void setInput(CreateTopicInput input) {
-            this.input = input;
-        }
-    }
-    public static class MutationUpdateTopicArgs {
-        private MutateTopicInput input;
-
-        public MutationUpdateTopicArgs() {}
-
-        public MutateTopicInput getInput() {
-            return this.input;
-        }
-        public void setInput(MutateTopicInput input) {
-            this.input = input;
-        }
-    }
-    public static class MutationDeleteTopicArgs {
-        private MutateTopicInput input;
-
-        public MutationDeleteTopicArgs() {}
-
-        public MutateTopicInput getInput() {
-            return this.input;
-        }
-        public void setInput(MutateTopicInput input) {
-            this.input = input;
-        }
-    }
-    public static class MutateTopicInput {
-        private String name;
-        private CreateOrMutateTopicConfigInput config;
-
-        public MutateTopicInput() {}
-
-        public String getName() {
-            return this.name;
-        }
-        public CreateOrMutateTopicConfigInput getConfig() {
-            return this.config;
-        }
-        public void setName(String name) {
-            this.name = name;
-        }
-        public void setConfig(CreateOrMutateTopicConfigInput config) {
-            this.config = config;
-        }
-    }
-
-    public static class Replicas {
-        private Boolean inSync;
-        private String id;
-
-        public Replicas() {
-        }
-        public Boolean getInSync() {
-            return inSync;
-        }
-        public void setInSync(Boolean inSync) {
-            this.inSync = inSync;
-        }
-
-        public String getId() {
+        public Integer getId() {
             return id;
         }
 
-        public void setId(String id) {
+        public void setId(Integer id) {
             this.id = id;
         }
     }
 
-    public static class Partitions {
+    public static class Partition {
+        // ID
         private Integer partition;
-        private List<Replicas> replicas;
+        private List<Node> replicas;
+        // InSyncReplicas
+        private List<Node> isr;
+        private Node leader;
 
-        public Partitions() {
-        }
         public Integer getPartition() {
             return partition;
         }
@@ -200,18 +37,34 @@ public class Types {
             this.partition = partition;
         }
 
-        public List<Replicas> getReplicas() {
+        public List<Node> getReplicas() {
             return replicas;
         }
 
-        public void setReplicas(List<Replicas> replicas) {
+        public void setReplicas(List<Node> replicas) {
             this.replicas = replicas;
+        }
+
+        public List<Node> getIsr() {
+            return isr;
+        }
+
+        public void setIsr(List<Node> isr) {
+            this.isr = isr;
+        }
+
+        public Node getLeader() {
+            return leader;
+        }
+
+        public void setLeader(Node leader) {
+            this.leader = leader;
         }
     }
 
-    public static class TopicConfigEntry {
-        String key;
-        String value;
+    public static class ConfigEntry {
+        private String key;
+        private String value;
 
         public String getKey() {
             return key;
@@ -230,35 +83,19 @@ public class Types {
         }
     }
 
-    public static class TopicConfig {
-        private Long partitionCount;
-        private Long replicationFactor;
-        private Long minInsyncReplicas;
+    public static class Topic {
+        // ID
+        private String name;
         private Boolean isInternal;
-        private List<TopicConfigEntry> pairs;
+        private List<Partition> partitions;
+        private List<ConfigEntry> config;
 
-        public Long getPartitionCount() {
-            return partitionCount;
+        public String getName() {
+            return name;
         }
 
-        public void setPartitionCount(Long partitionCount) {
-            this.partitionCount = partitionCount;
-        }
-
-        public Long getReplicationFactor() {
-            return replicationFactor;
-        }
-
-        public void setReplicationFactor(Long replicationFactor) {
-            this.replicationFactor = replicationFactor;
-        }
-
-        public Long getMinInsyncReplicas() {
-            return minInsyncReplicas;
-        }
-
-        public void setMinInsyncReplicas(Long minInsyncReplicas) {
-            this.minInsyncReplicas = minInsyncReplicas;
+        public void setName(String name) {
+            this.name = name;
         }
 
         public Boolean getIsInternal() {
@@ -269,12 +106,165 @@ public class Types {
             isInternal = internal;
         }
 
-        public List<TopicConfigEntry> getPairs() {
-            return pairs;
+        public List<Partition> getPartitions() {
+            return partitions;
         }
 
-        public void setPairs(List<TopicConfigEntry> pairs) {
-            this.pairs = pairs;
+        public void setPartitions(List<Partition> partitions) {
+            this.partitions = partitions;
+        }
+
+        public List<ConfigEntry> getConfig() {
+            return config;
+        }
+
+        public void setConfig(List<ConfigEntry> config) {
+            this.config = config;
+        }
+    }
+
+    public static class TopicList {
+        private List<Topic> items;
+        private Integer offset;
+        private Integer limit;
+        private Integer count;
+
+        public List<Topic> getItems() {
+            return items;
+        }
+
+        public void setItems(List<Topic> items) {
+            this.items = items;
+        }
+
+        public Integer getOffset() {
+            return offset;
+        }
+
+        public void setOffset(Integer offset) {
+            this.offset = offset;
+        }
+
+        public Integer getLimit() {
+            return limit;
+        }
+
+        public void setLimit(Integer limit) {
+            this.limit = limit;
+        }
+
+        public Integer getCount() {
+            return count;
+        }
+
+        public void setCount(Integer count) {
+            this.count = count;
+        }
+    }
+
+    public static class NewTopicConfigEntry {
+        private String key;
+        private String value;
+
+        public String getKey() {
+            return key;
+        }
+
+        public void setKey(String key) {
+            this.key = key;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public void setValue(String value) {
+            this.value = value;
+        }
+    }
+
+    public static class NewTopic {
+        private String name;
+        private Integer numPartitions;
+        private Integer replicationFactor;
+        private List<NewTopicConfigEntry> config;
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public Integer getNumPartitions() {
+            return numPartitions;
+        }
+
+        public void setNumPartitions(Integer numPartitions) {
+            this.numPartitions = numPartitions;
+        }
+
+        public Integer getReplicationFactor() {
+            return replicationFactor;
+        }
+
+        public void setReplicationFactor(Integer replicationFactor) {
+            this.replicationFactor = replicationFactor;
+        }
+
+        public List<NewTopicConfigEntry> getConfig() {
+            return config;
+        }
+
+        public void setConfig(List<NewTopicConfigEntry> config) {
+            this.config = config;
+        }
+    }
+
+    public static class PageRequest {
+        private Integer limit;
+        private Integer offset;
+
+        public Integer getLimit() {
+            return limit;
+        }
+
+        public void setLimit(Integer limit) {
+            this.limit = limit;
+        }
+
+        public Integer getOffset() {
+            return offset;
+        }
+
+        public void setOffset(Integer offset) {
+            this.offset = offset;
+        }
+    }
+    enum SortDirectionEnum {
+        DESC,
+        ASC
+    }
+
+    public static class OrderByInput {
+        private String field;
+        private SortDirectionEnum order;
+
+        public String getField() {
+            return field;
+        }
+
+        public void setField(String field) {
+            this.field = field;
+        }
+
+        public SortDirectionEnum getOrder() {
+            return order;
+        }
+
+        public void setOrder(SortDirectionEnum order) {
+            this.order = order;
         }
     }
 }
