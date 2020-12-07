@@ -61,6 +61,10 @@ public class AdminClientProvider {
         try {
             this.adminClient = KafkaAdminClient.create(this.vertx, props);
         } catch (Exception e) {
+            log.error("AdminClient with configuration {} cannot be created. Check whether the kafka cluster available.", props, e);
+            System.exit(1);
+        }
+        if (this.adminClient == null) {
             System.exit(1);
         }
     }
