@@ -61,23 +61,14 @@ public class KafkaAdminService implements GraphQLRegistration {
         }, ar -> {
                 final TypeDefinitionRegistry schema = (TypeDefinitionRegistry) ar.result();
 
-                AdminClientWrapper acw = new AdminClientWrapper(vertx, config);
-                try {
-                    acw.open();
-                } catch (Exception e) {
-                    log.error("AdminClient with configuration {} cannot be created. Check whether the kafka cluster available.", config, e);
-                    promise.fail(e);
-                    return;
-                }
-
                 final RuntimeWiring query = RuntimeWiring.newRuntimeWiring()
                     .type("Query", typeWiring -> typeWiring
-                        .dataFetcher("topic", TopicDescriptionHandler.topicDescriptionFetch(acw))
-                        .dataFetcher("topicList", TopicListHandler.topicListFetch(acw))
+                        .dataFetcher("topic", TopicDescriptionHandler.topicDescriptionFetch(config, vertx))
+                        .dataFetcher("topicList", TopicListHandler.topicListFetch(config, vertx))
                     )
                     .type("Mutation", typeWiring -> typeWiring
-                            .dataFetcher("deleteTopics", TopicsDeleteHandler.deleteTopics(acw))
-                            .dataFetcher("createTopic", TopicCreateHandler.createTopic(acw))
+                            .dataFetcher("deleteTopics", TopicsDeleteHandler.deleteTopics(config, vertx))
+                            .dataFetcher("createTopic", TopicCreateHandler.createTopic(config, vertx))
                     )
                     .build();
 

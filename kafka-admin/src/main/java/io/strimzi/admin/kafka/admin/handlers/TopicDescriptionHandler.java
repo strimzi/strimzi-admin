@@ -4,10 +4,13 @@
  */
 package io.strimzi.admin.kafka.admin.handlers;
 
+import io.strimzi.admin.Constants;
 import io.strimzi.admin.kafka.admin.AdminClientWrapper;
 import io.strimzi.admin.kafka.admin.model.Types;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
+import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.graphql.VertxDataFetcher;
 import io.vertx.kafka.admin.Config;
 import io.vertx.kafka.admin.ConfigEntry;
@@ -20,8 +23,21 @@ import java.util.Map;
 
 public class TopicDescriptionHandler {
 
-    public static VertxDataFetcher topicDescriptionFetch(AdminClientWrapper acw) {
+    public static VertxDataFetcher topicDescriptionFetch(Map<String, Object> acConfig, Vertx vertx) {
         VertxDataFetcher<Types.Topic> dataFetcher = new VertxDataFetcher<>((environment, prom) -> {
+            RoutingContext rc = environment.getContext();
+            if (rc.request().getHeader("Authorization") != null) {
+                acConfig.put(Constants.OAUTH_ACCESS_TOKEN, rc.request().getHeader("Authorization"));
+            }
+
+            AdminClientWrapper acw = new AdminClientWrapper(vertx, acConfig);
+            try {
+                acw.open();
+            } catch (Exception e) {
+                prom.fail(e);
+                return;
+            }
+
             String topicToDescribe = environment.getArgument("name");
             if (topicToDescribe == null || topicToDescribe.isEmpty()) {
                 prom.fail("Topic to describe has not been specified");
@@ -88,6 +104,7 @@ public class TopicDescriptionHandler {
                     });
                     t.setConfig(topicConfigEntries);
                     prom.complete(t);
+                    acw.close();
                 });
             });
         });

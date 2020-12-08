@@ -59,24 +59,19 @@ public class Main {
         }
         adminClientConfig.put(Constants.BOOTSTRAP_SERVERS_CONFIG, envConfig.get("BOOTSTRAP_SERVERS").toString());
 
-        if (envConfig.get("SSL_KEYSTORE_LOCATION") != null && envConfig.get("SSL_KEYSTORE_PASSWORD") != null) {
-            adminClientConfig.put(Constants.SSL_KEYSTORE_LOCATION_CONFIG, envConfig.get("SSL_KEYSTORE_LOCATION").toString());
-            adminClientConfig.put(Constants.SSL_KEYSTORE_PASSWORD_CONFIG, envConfig.get("SSL_KEYSTORE_PASSWORD").toString());
-            adminClientConfig.put(Constants.SSL_KEYSTORE_TYPE_CONFIG, "PKCS12");
-        }
+        // oAuth
+        /*
+        adminClientConfig.put(Constants.SECURITY_PROTOCOL_CONFIG, "SASL_SSL");
+        adminClientConfig.put(Constants.SECURITY_SASL_MECHANISM, "OAUTHBEARER");
+        adminClientConfig.put(Constants.SECURITY_SASL_JAAS_CONFIG, "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required ;");
+        adminClientConfig.put(Constants.SECURITY_SASL_LOGIN_CLASS, "io.strimzi.kafka.oauth.client.JaasClientOauthLoginCallbackHandler");
+         */
 
-        if (envConfig.get("SSL_TRUSTSTORE_LOCATION") != null && envConfig.get("SSL_TRUSTSTORE_PASSWORD") != null) {
-            adminClientConfig.put(Constants.SECURITY_PROTOCOL_CONFIG, "SSL");
-            adminClientConfig.put(Constants.SSL_TRUSTSTORE_LOCATION_CONFIG, envConfig.get("SSL_TRUSTSTORE_LOCATION").toString());
-            adminClientConfig.put(Constants.SSL_TRUSTSTORE_PASSWORD_CONFIG, envConfig.get("SSL_TRUSTSTORE_PASSWORD").toString());
-            adminClientConfig.put(Constants.SSL_TRUSTSTORE_TYPE_CONFIG, "PKCS12");
-        }
-
+        // admin client
         adminClientConfig.put(Constants.METADATA_MAX_AGE_CONFIG, "30000");
         adminClientConfig.put(Constants.REQUEST_TIMEOUT_MS_CONFIG, "10000");
         adminClientConfig.put(Constants.RETRIES_CONFIG, "3");
         adminClientConfig.put(Constants.DEFAULT_API_TIMEOUT_MS_CONFIG, "40000");
-
 
         return adminClientConfig;
     }

@@ -19,6 +19,15 @@ public class Constants {
     public static final String SSL_TRUSTSTORE_LOCATION_CONFIG = "ssl.truststore.location";
     public static final String SSL_TRUSTSTORE_TYPE_CONFIG = "ssl.truststore.type";
 
+    public static final String OAUTH_ACCESS_TOKEN = "oauth.access.token";
+    public static final String OAUTH_REFRESH_TOKEN = "oauth.refresh.token";
+    public static final String OAUTH_TOKEN_ENDPOINT_URI = "oauth.token.endpoint.uri";
+    public static final String OAUTH_MAX_TOKEN_EXPIRY_SECONDS = "oauth.max.token.expiry.seconds";
+
     public static final String SECURITY_PROTOCOL_CONFIG = "security.protocol";
+    public static final String SECURITY_SASL_MECHANISM = "sasl.mechanism";
+    public static final String SECURITY_SASL_JAAS_CONFIG = "sasl.jaas.config";
+    public static final String SECURITY_SASL_LOGIN_CLASS = "sasl.login.callback.handler.class";
+
 
 }

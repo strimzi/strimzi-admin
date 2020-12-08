@@ -4,9 +4,12 @@
  */
 package io.strimzi.admin.kafka.admin.handlers;
 
+import io.strimzi.admin.Constants;
 import io.strimzi.admin.kafka.admin.AdminClientWrapper;
 import io.strimzi.admin.kafka.admin.model.Types;
 import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
+import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.graphql.VertxDataFetcher;
 import io.vertx.kafka.admin.NewTopic;
 
@@ -18,8 +21,20 @@ import java.util.Map;
 
 public class TopicCreateHandler {
 
-    public static VertxDataFetcher createTopic(AdminClientWrapper acw) {
+    public static VertxDataFetcher createTopic(Map<String, Object> acConfig, Vertx vertx) {
         VertxDataFetcher<Types.Topic> dataFetcher = new VertxDataFetcher<>((environment, prom) -> {
+            RoutingContext rc = environment.getContext();
+            if (rc.request().getHeader("Authorization") != null) {
+                acConfig.put(Constants.OAUTH_ACCESS_TOKEN, rc.request().getHeader("Authorization"));
+            }
+
+            AdminClientWrapper acw = new AdminClientWrapper(vertx, acConfig);
+            try {
+                acw.open();
+            } catch (Exception e) {
+                prom.fail(e);
+                return;
+            }
 
             NewTopic newKafkaTopic = new NewTopic();
             Types.NewTopic inputTopic = new Types.NewTopic();
@@ -54,7 +69,14 @@ public class TopicCreateHandler {
             }
 
             Promise createTopicPromise = Promise.promise();
-            acw.createTopic(Collections.singletonList(newKafkaTopic), createTopicPromise);
+            acw.createTopic(Collections.singletonList(newKafkaTopic), res -> {
+                if (res.failed()) {
+                    prom.fail(res.cause());
+                } else {
+                    createTopicPromise.complete(res);
+                }
+            });
+
             createTopicPromise.future().onComplete(ignore -> {
                 Types.Topic topic = new Types.Topic();
                 List<Types.ConfigEntry> newConf = new ArrayList<>();
@@ -68,6 +90,7 @@ public class TopicCreateHandler {
                 topic.setConfig(newConf);
                 topic.setName(inputTopic.getName());
                 prom.complete(topic);
+                acw.close();
             });
         });
         return dataFetcher;

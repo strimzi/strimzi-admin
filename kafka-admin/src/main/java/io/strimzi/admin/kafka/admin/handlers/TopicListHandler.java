@@ -4,14 +4,17 @@
  */
 package io.strimzi.admin.kafka.admin.handlers;
 
+import io.strimzi.admin.Constants;
 import io.strimzi.admin.kafka.admin.AdminClientWrapper;
 import io.strimzi.admin.kafka.admin.model.Types;
 import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
+import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.graphql.VertxDataFetcher;
-import io.vertx.ext.web.impl.RoutingContextWrapper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -20,10 +23,20 @@ import java.util.regex.PatternSyntaxException;
 
 public class TopicListHandler {
 
-    public static VertxDataFetcher topicListFetch(AdminClientWrapper acw) {
+    public static VertxDataFetcher topicListFetch(Map<String, Object> acConfig, Vertx vertx) {
         VertxDataFetcher<Types.TopicList> dataFetcher = new VertxDataFetcher<>((env, prom) -> {
-            RoutingContextWrapper routingContext = env.getContext();
-            routingContext.request().headers().get("token");
+            RoutingContext rc = env.getContext();
+            if (rc.request().getHeader("Authorization") != null) {
+                acConfig.put(Constants.OAUTH_ACCESS_TOKEN, rc.request().getHeader("Authorization"));
+            }
+
+            AdminClientWrapper acw = new AdminClientWrapper(vertx, acConfig);
+            try {
+                acw.open();
+            } catch (Exception e) {
+                prom.fail(e);
+                return;
+            }
 
             Promise<Set<String>> describeTopicsNamesPromise = Promise.promise();
             acw.listTopics(describeTopicsNamesPromise);
@@ -48,6 +61,7 @@ public class TopicListHandler {
                         });
                         topicList.setItems(items);
                         prom.complete(topicList);
+                        acw.close();
                     });
         });
         return dataFetcher;
