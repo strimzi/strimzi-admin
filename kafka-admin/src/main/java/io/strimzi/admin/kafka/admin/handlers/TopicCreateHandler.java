@@ -4,7 +4,7 @@
  */
 package io.strimzi.admin.kafka.admin.handlers;
 
-import io.strimzi.admin.kafka.admin.AdminClientProvider;
+import io.strimzi.admin.kafka.admin.AdminClientWrapper;
 import io.strimzi.admin.kafka.admin.model.Types;
 import io.vertx.core.Promise;
 import io.vertx.ext.web.handler.graphql.VertxDataFetcher;
@@ -18,7 +18,7 @@ import java.util.Map;
 
 public class TopicCreateHandler {
 
-    public static VertxDataFetcher createTopic(AdminClientProvider acp) {
+    public static VertxDataFetcher createTopic(AdminClientWrapper acw) {
         VertxDataFetcher<Types.Topic> dataFetcher = new VertxDataFetcher<>((environment, prom) -> {
 
             NewTopic newKafkaTopic = new NewTopic();
@@ -54,7 +54,7 @@ public class TopicCreateHandler {
             }
 
             Promise createTopicPromise = Promise.promise();
-            acp.createTopic(Collections.singletonList(newKafkaTopic), createTopicPromise);
+            acw.createTopic(Collections.singletonList(newKafkaTopic), createTopicPromise);
             createTopicPromise.future().onComplete(ignore -> {
                 Types.Topic topic = new Types.Topic();
                 List<Types.ConfigEntry> newConf = new ArrayList<>();
@@ -67,7 +67,6 @@ public class TopicCreateHandler {
 
                 topic.setConfig(newConf);
                 topic.setName(inputTopic.getName());
-                // partitions and isInternal?
                 prom.complete(topic);
             });
         });

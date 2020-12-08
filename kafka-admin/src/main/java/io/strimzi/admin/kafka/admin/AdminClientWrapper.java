@@ -9,12 +9,9 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.admin.Config;
 import io.vertx.kafka.admin.KafkaAdminClient;
-import io.vertx.kafka.admin.ListOffsetsResultInfo;
 import io.vertx.kafka.admin.NewTopic;
-import io.vertx.kafka.admin.OffsetSpec;
 import io.vertx.kafka.admin.TopicDescription;
 import io.vertx.kafka.client.common.ConfigResource;
-import io.vertx.kafka.client.common.TopicPartition;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -24,15 +21,15 @@ import java.util.Properties;
 import java.util.Set;
 
 /**
- * class for admin client provider
+ * class for admin client wrapper
  */
-public class AdminClientProvider {
-    protected final Logger log = LogManager.getLogger(AdminClientProvider.class);
+public class AdminClientWrapper {
+    protected final Logger log = LogManager.getLogger(AdminClientWrapper.class);
 
     protected final Vertx vertx;
     protected final Map<String, Object> config;
 
-    private Handler<AdminClientProvider> closeHandler;
+    private Handler<AdminClientWrapper> closeHandler;
 
     private KafkaAdminClient adminClient;
 
@@ -42,12 +39,12 @@ public class AdminClientProvider {
      * @param vertx Vert.x instance
      * @param config configuration
      */
-    public AdminClientProvider(Vertx vertx, Map<String, Object> config) {
+    public AdminClientWrapper(Vertx vertx, Map<String, Object> config) {
         this.vertx = vertx;
         this.config = config;
     }
 
-    public AdminClientProvider closeHandler(Handler<AdminClientProvider> endpointCloseHandler) {
+    public AdminClientWrapper closeHandler(Handler<AdminClientWrapper> endpointCloseHandler) {
         this.closeHandler = endpointCloseHandler;
         return this;
     }
@@ -61,11 +58,7 @@ public class AdminClientProvider {
         try {
             this.adminClient = KafkaAdminClient.create(this.vertx, props);
         } catch (Exception e) {
-            log.error("AdminClient with configuration {} cannot be created. Check whether the kafka cluster available.", props, e);
-            System.exit(1);
-        }
-        if (this.adminClient == null) {
-            System.exit(1);
+            throw e;
         }
     }
 
@@ -114,14 +107,6 @@ public class AdminClientProvider {
     public void describeConfigs(List<ConfigResource> configResources, Handler<AsyncResult<Map<ConfigResource, Config>>> handler) {
         log.info("Describe configs {}", configResources);
         this.adminClient.describeConfigs(configResources, handler);
-    }
-
-    /**
-     * Returns the offset spec for the given partition.
-     */
-    public void listOffsets(Map<TopicPartition, OffsetSpec> topicPartitionOffsets, Handler<AsyncResult<Map<TopicPartition, ListOffsetsResultInfo>>> handler) {
-        log.info("Get the offset spec for partition {}", topicPartitionOffsets);
-        this.adminClient.listOffsets(topicPartitionOffsets, handler);
     }
 
     /**

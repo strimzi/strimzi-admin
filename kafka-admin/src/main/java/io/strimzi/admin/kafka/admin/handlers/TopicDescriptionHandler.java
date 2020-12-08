@@ -4,7 +4,7 @@
  */
 package io.strimzi.admin.kafka.admin.handlers;
 
-import io.strimzi.admin.kafka.admin.AdminClientProvider;
+import io.strimzi.admin.kafka.admin.AdminClientWrapper;
 import io.strimzi.admin.kafka.admin.model.Types;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -20,16 +20,21 @@ import java.util.Map;
 
 public class TopicDescriptionHandler {
 
-    public static VertxDataFetcher topicDescriptionFetch(AdminClientProvider acp) {
+    public static VertxDataFetcher topicDescriptionFetch(AdminClientWrapper acw) {
         VertxDataFetcher<Types.Topic> dataFetcher = new VertxDataFetcher<>((environment, prom) -> {
             String topicToDescribe = environment.getArgument("name");
             if (topicToDescribe == null || topicToDescribe.isEmpty()) {
                 prom.fail("Topic to describe has not been specified");
             }
             Promise<Map<String, io.vertx.kafka.admin.TopicDescription>> describeTopicsPromise = Promise.promise();
-            acp.describeTopics(Collections.singletonList(topicToDescribe), describeTopicsPromise);
+            acw.describeTopics(Collections.singletonList(topicToDescribe), result -> {
+                if (result.failed()) {
+                    describeTopicsPromise.fail(result.cause());
+                    prom.fail(result.cause());
+                }
+                describeTopicsPromise.complete(result.result());
+            });
 
-            ConfigResource resource = new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, topicToDescribe);
             Promise<Map<ConfigResource, Config>> describeTopicConfigPromise = Promise.promise();
 
             describeTopicsPromise.future().<Types.Topic>compose(topics -> {
@@ -68,13 +73,13 @@ public class TopicDescriptionHandler {
             }).onComplete(topic -> {
                 Types.Topic t = topic.result();
 
-                acp.describeConfigs(Collections.singletonList(resource), describeTopicConfigPromise);
+                ConfigResource resource = new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, topicToDescribe);
+                acw.describeConfigs(Collections.singletonList(resource), describeTopicConfigPromise);
                 describeTopicConfigPromise.future().onComplete(topics -> {
                     Config cfg = topics.result().get(resource);
                     List<ConfigEntry> entries = cfg.getEntries();
 
                     List<Types.ConfigEntry> topicConfigEntries = new ArrayList<>();
-                    // way2 put there everything
                     entries.stream().forEach(entry -> {
                         Types.ConfigEntry ce = new Types.ConfigEntry();
                         ce.setKey(entry.getName());

@@ -16,6 +16,9 @@ import io.strimzi.admin.kafka.admin.handlers.TopicListHandler;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -26,6 +29,8 @@ import java.util.Objects;
  * queries and mutations.
  */
 public class KafkaAdminService implements GraphQLRegistration {
+
+    protected final Logger log = LogManager.getLogger(KafkaAdminService.class);
     private static final String KAFKA_ADMIN_SCHEMA_LOCATION = "graphql-schema/kafka-admin.graphql";
     private Map<String, Object> config;
 
@@ -56,16 +61,23 @@ public class KafkaAdminService implements GraphQLRegistration {
         }, ar -> {
                 final TypeDefinitionRegistry schema = (TypeDefinitionRegistry) ar.result();
 
-                AdminClientProvider acp = new AdminClientProvider(vertx, config);
-                acp.open();
+                AdminClientWrapper acw = new AdminClientWrapper(vertx, config);
+                try {
+                    acw.open();
+                } catch (Exception e) {
+                    log.error("AdminClient with configuration {} cannot be created. Check whether the kafka cluster available.", config, e);
+                    promise.fail(e);
+                    return;
+                }
+
                 final RuntimeWiring query = RuntimeWiring.newRuntimeWiring()
                     .type("Query", typeWiring -> typeWiring
-                        .dataFetcher("topic", TopicDescriptionHandler.topicDescriptionFetch(acp))
-                        .dataFetcher("topicList", TopicListHandler.topicListFetch(acp))
+                        .dataFetcher("topic", TopicDescriptionHandler.topicDescriptionFetch(acw))
+                        .dataFetcher("topicList", TopicListHandler.topicListFetch(acw))
                     )
                     .type("Mutation", typeWiring -> typeWiring
-                            .dataFetcher("deleteTopics", TopicsDeleteHandler.deleteTopics(acp))
-                            .dataFetcher("createTopic", TopicCreateHandler.createTopic(acp))
+                            .dataFetcher("deleteTopics", TopicsDeleteHandler.deleteTopics(acw))
+                            .dataFetcher("createTopic", TopicCreateHandler.createTopic(acw))
                     )
                     .build();
 
