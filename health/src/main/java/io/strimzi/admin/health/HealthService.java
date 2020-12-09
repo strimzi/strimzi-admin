@@ -11,8 +11,6 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 
-import java.util.Map;
-
 /**
  * Implements routes to be used as kubernetes liveness and readiness probes. The implementations
  * simply return a static string containing a JSON body of "status: ok".
@@ -22,7 +20,7 @@ public class HealthService implements RouteRegistration {
     private static final String SUCCESS_RESPONSE = "{\"status\": \"OK\"}";
 
     @Override
-    public Future<RouteRegistrationDescriptor> getRegistrationDescriptor(final Vertx vertx, Map<String, Object> config) {
+    public Future<RouteRegistrationDescriptor> getRegistrationDescriptor(final Vertx vertx) {
 
         final Promise<RouteRegistrationDescriptor> promise = Promise.promise();
 

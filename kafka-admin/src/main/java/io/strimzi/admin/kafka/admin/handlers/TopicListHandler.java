@@ -40,7 +40,11 @@ public class TopicListHandler {
 
             Promise<Set<String>> describeTopicsNamesPromise = Promise.promise();
             acw.listTopics(describeTopicsNamesPromise);
-            describeTopicsNamesPromise.future()
+            describeTopicsNamesPromise.future().onFailure(
+                fail -> {
+                    prom.fail(fail);
+                    return;
+                })
                     .onComplete(topics -> {
                         Types.TopicList topicList = new Types.TopicList();
                         List<Types.Topic> items = new ArrayList<>();

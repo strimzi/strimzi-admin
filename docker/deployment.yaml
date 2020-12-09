@@ -21,7 +21,7 @@ spec:
             - containerPort: 8080
               name: http
           env:
-            - name: BOOTSTRAP_SERVERS
+            - name: KAFKA_ADMIN_BOOTSTRAP_SERVERS
               value: "my-cluster-kafka-bootstrap:9092"
             - name: VERTXWEB_ENVIRONMENT
               value: "dev"

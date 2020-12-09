@@ -7,6 +7,7 @@ package io.strimzi.admin.kafka.admin;
 import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
+import io.strimzi.admin.Constants;
 import io.strimzi.admin.graphql.registration.GraphQLRegistration;
 import io.strimzi.admin.graphql.registration.GraphQLRegistrationDescriptor;
 import io.strimzi.admin.kafka.admin.handlers.TopicCreateHandler;
@@ -21,8 +22,10 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Defines the GraphQL schema and its implementation for the Kafka Admin client
@@ -32,11 +35,11 @@ public class KafkaAdminService implements GraphQLRegistration {
 
     protected final Logger log = LogManager.getLogger(KafkaAdminService.class);
     private static final String KAFKA_ADMIN_SCHEMA_LOCATION = "graphql-schema/kafka-admin.graphql";
+    private static final String PREFIX = "KAFKA_ADMIN_";
     private Map<String, Object> config;
 
-    @Override
-    public void setConfiguration(Map<String, Object> config) {
-        this.config = config;
+    public KafkaAdminService() throws Exception {
+        config = envVarsToAdminClientConfig(PREFIX);
     }
 
     @Override
@@ -76,6 +79,29 @@ public class KafkaAdminService implements GraphQLRegistration {
             });
 
         return promise.future();
+    }
+
+    private static Map envVarsToAdminClientConfig(String prefix) throws Exception {
+        Map envConfig = System.getenv().entrySet().stream().filter(entry -> entry.getKey().startsWith(prefix)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        Map<String, String> adminClientConfig = new HashMap();
+        if (envConfig.get(PREFIX + "BOOTSTRAP_SERVERS") == null) {
+            throw new Exception("Bootstrap address has to be specified");
+        }
+        adminClientConfig.put(Constants.BOOTSTRAP_SERVERS_CONFIG, envConfig.get(PREFIX + "BOOTSTRAP_SERVERS").toString());
+
+        // oAuth
+        adminClientConfig.put(Constants.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
+        adminClientConfig.put(Constants.SECURITY_SASL_MECHANISM, "OAUTHBEARER");
+        adminClientConfig.put(Constants.SECURITY_SASL_LOGIN_CLASS, "io.strimzi.kafka.oauth.client.JaasClientOauthLoginCallbackHandler");
+
+        // admin client
+        adminClientConfig.put(Constants.METADATA_MAX_AGE_CONFIG, "30000");
+        adminClientConfig.put(Constants.REQUEST_TIMEOUT_MS_CONFIG, "10000");
+        adminClientConfig.put(Constants.RETRIES_CONFIG, "3");
+        adminClientConfig.put(Constants.DEFAULT_API_TIMEOUT_MS_CONFIG, "30000");
+
+        return adminClientConfig;
     }
 }
 

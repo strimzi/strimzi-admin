@@ -53,60 +53,64 @@ public class TopicDescriptionHandler {
 
             Promise<Map<ConfigResource, Config>> describeTopicConfigPromise = Promise.promise();
 
-            describeTopicsPromise.future().<Types.Topic>compose(topics -> {
-                io.vertx.kafka.admin.TopicDescription topicDesc = topics.get(topicToDescribe);
-                Types.Topic topic = new Types.Topic();
-                topic.setName(topicDesc.getName());
-                topic.setIsInternal(topicDesc.isInternal());
-                List<Types.Partition> partitions = new ArrayList<>();
-                topicDesc.getPartitions().forEach(part -> {
-                    Types.Partition partition = new Types.Partition();
-                    Types.Node leader = new Types.Node();
-                    leader.setId(part.getLeader().getId());
+            describeTopicsPromise.future().onFailure(
+                fail -> {
+                    prom.fail(fail);
+                    return;
+                }).<Types.Topic>compose(topics -> {
+                    io.vertx.kafka.admin.TopicDescription topicDesc = topics.get(topicToDescribe);
+                    Types.Topic topic = new Types.Topic();
+                    topic.setName(topicDesc.getName());
+                    topic.setIsInternal(topicDesc.isInternal());
+                    List<Types.Partition> partitions = new ArrayList<>();
+                    topicDesc.getPartitions().forEach(part -> {
+                        Types.Partition partition = new Types.Partition();
+                        Types.Node leader = new Types.Node();
+                        leader.setId(part.getLeader().getId());
 
-                    List<Types.Node> replicas = new ArrayList<>();
-                    part.getReplicas().forEach(rep -> {
-                        Types.Node replica = new Types.Node();
-                        replica.setId(rep.getId());
-                        replicas.add(replica);
+                        List<Types.Node> replicas = new ArrayList<>();
+                        part.getReplicas().forEach(rep -> {
+                            Types.Node replica = new Types.Node();
+                            replica.setId(rep.getId());
+                            replicas.add(replica);
+                        });
+
+                        List<Types.Node> inSyncReplicas = new ArrayList<>();
+                        part.getIsr().forEach(isr -> {
+                            Types.Node inSyncReplica = new Types.Node();
+                            inSyncReplica.setId(isr.getId());
+                            inSyncReplicas.add(inSyncReplica);
+                        });
+
+                        partition.setPartition(partition.getPartition());
+                        partition.setLeader(leader);
+                        partition.setReplicas(replicas);
+                        partition.setIsr(inSyncReplicas);
+                        partitions.add(partition);
                     });
+                    topic.setPartitions(partitions);
+                    return Future.succeededFuture(topic);
+                }).onComplete(topic -> {
+                    Types.Topic t = topic.result();
 
-                    List<Types.Node> inSyncReplicas = new ArrayList<>();
-                    part.getIsr().forEach(isr -> {
-                        Types.Node inSyncReplica = new Types.Node();
-                        inSyncReplica.setId(isr.getId());
-                        inSyncReplicas.add(inSyncReplica);
+                    ConfigResource resource = new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, topicToDescribe);
+                    acw.describeConfigs(Collections.singletonList(resource), describeTopicConfigPromise);
+                    describeTopicConfigPromise.future().onComplete(topics -> {
+                        Config cfg = topics.result().get(resource);
+                        List<ConfigEntry> entries = cfg.getEntries();
+
+                        List<Types.ConfigEntry> topicConfigEntries = new ArrayList<>();
+                        entries.stream().forEach(entry -> {
+                            Types.ConfigEntry ce = new Types.ConfigEntry();
+                            ce.setKey(entry.getName());
+                            ce.setValue(entry.getValue());
+                            topicConfigEntries.add(ce);
+                        });
+                        t.setConfig(topicConfigEntries);
+                        prom.complete(t);
+                        acw.close();
                     });
-
-                    partition.setPartition(partition.getPartition());
-                    partition.setLeader(leader);
-                    partition.setReplicas(replicas);
-                    partition.setIsr(inSyncReplicas);
-                    partitions.add(partition);
                 });
-                topic.setPartitions(partitions);
-                return Future.succeededFuture(topic);
-            }).onComplete(topic -> {
-                Types.Topic t = topic.result();
-
-                ConfigResource resource = new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, topicToDescribe);
-                acw.describeConfigs(Collections.singletonList(resource), describeTopicConfigPromise);
-                describeTopicConfigPromise.future().onComplete(topics -> {
-                    Config cfg = topics.result().get(resource);
-                    List<ConfigEntry> entries = cfg.getEntries();
-
-                    List<Types.ConfigEntry> topicConfigEntries = new ArrayList<>();
-                    entries.stream().forEach(entry -> {
-                        Types.ConfigEntry ce = new Types.ConfigEntry();
-                        ce.setKey(entry.getName());
-                        ce.setValue(entry.getValue());
-                        topicConfigEntries.add(ce);
-                    });
-                    t.setConfig(topicConfigEntries);
-                    prom.complete(t);
-                    acw.close();
-                });
-            });
         });
         return dataFetcher;
     }

@@ -27,7 +27,6 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.ServiceLoader;
 import org.apache.logging.log4j.LogManager;
@@ -57,7 +56,7 @@ public class GraphQLService implements RouteRegistration {
     private static final String BASE_SCHEMA_LOCATION = "graphql-schema/baseSchema.graphql";
 
     @Override
-    public Future<RouteRegistrationDescriptor> getRegistrationDescriptor(Vertx vertx, Map<String, Object> config) {
+    public Future<RouteRegistrationDescriptor> getRegistrationDescriptor(Vertx vertx) {
         final Promise<RouteRegistrationDescriptor> promise = Promise.promise();
 
         final Router router = Router.router(vertx);
@@ -68,7 +67,7 @@ public class GraphQLService implements RouteRegistration {
             router.route("/graphiql/*").handler(GraphiQLHandler.create());
         }
 
-        configureGraphQLHandler(vertx, config)
+        configureGraphQLHandler(vertx)
             .onSuccess(graphQLHandler -> {
                 graphQLHandler.queryContext(routingContext -> routingContext);
                 router.post("/graphql").handler(graphQLHandler);
@@ -82,7 +81,7 @@ public class GraphQLService implements RouteRegistration {
         return promise.future();
     }
 
-    private Future<GraphQLHandler> configureGraphQLHandler(final Vertx vertx, Map<String, Object> config) {
+    private Future<GraphQLHandler> configureGraphQLHandler(final Vertx vertx) {
         Promise<GraphQLHandler> promise = Promise.promise();
 
         vertx.executeBlocking(p -> {
@@ -102,7 +101,7 @@ public class GraphQLService implements RouteRegistration {
                 }
             }, ar -> {
                 if (ar.succeeded()) {
-                    setupGraphQL(vertx, (TypeDefinitionRegistry) ar.result(), config)
+                    setupGraphQL(vertx, (TypeDefinitionRegistry) ar.result())
                         .onSuccess(graphQL -> promise.complete(GraphQLHandler.create(graphQL)))
                         .onFailure(promise::fail);
                 } else {
@@ -114,14 +113,13 @@ public class GraphQLService implements RouteRegistration {
         return promise.future();
     }
 
-    private Future<GraphQL> setupGraphQL(final Vertx vertx, final TypeDefinitionRegistry baseSchemaRegistry, Map<String, Object> config) {
+    private Future<GraphQL> setupGraphQL(final Vertx vertx, final TypeDefinitionRegistry baseSchemaRegistry) {
         final Promise<GraphQL> promise = Promise.promise();
 
         final ServiceLoader<GraphQLRegistration> loader = ServiceLoader.load(GraphQLRegistration.class);
         final List<Future<GraphQLRegistrationDescriptor>> registrationDescriptors = new ArrayList<>();
 
         loader.forEach(graphQLRegistration -> {
-            graphQLRegistration.setConfiguration(config);
             registrationDescriptors.add(graphQLRegistration.getRegistrationDescriptor(vertx));
         });
 
