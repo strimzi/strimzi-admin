@@ -49,10 +49,6 @@
             <artifactId>graphql</artifactId>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>io.strimzi</groupId>
-            <artifactId>http-server</artifactId>
-        </dependency>
     </dependencies>
 
 </project>

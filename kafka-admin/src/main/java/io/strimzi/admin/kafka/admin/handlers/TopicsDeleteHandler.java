@@ -4,11 +4,12 @@
  */
 package io.strimzi.admin.kafka.admin.handlers;
 
-import io.strimzi.admin.Constants;
 import io.strimzi.admin.kafka.admin.AdminClientWrapper;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.graphql.VertxDataFetcher;
+import org.apache.kafka.common.config.SaslConfigs;
+
 import java.util.List;
 import java.util.Map;
 
@@ -18,7 +19,7 @@ public class TopicsDeleteHandler {
         VertxDataFetcher<List<String>> dataFetcher = new VertxDataFetcher<>((environment, prom) -> {
             RoutingContext rc = environment.getContext();
             if (rc.request().getHeader("Authorization") != null) {
-                acConfig.put(Constants.SECURITY_SASL_JAAS_CONFIG, "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required oauth.access.token=" + rc.request().getHeader("Authorization") + " ;");
+                acConfig.put(SaslConfigs.SASL_JAAS_CONFIG, "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required oauth.access.token=" + rc.request().getHeader("Authorization") + " ;");
             }
 
             AdminClientWrapper acw = new AdminClientWrapper(vertx, acConfig);
