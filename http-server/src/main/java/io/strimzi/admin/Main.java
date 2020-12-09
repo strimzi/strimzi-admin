@@ -60,12 +60,12 @@ public class Main {
         adminClientConfig.put(Constants.BOOTSTRAP_SERVERS_CONFIG, envConfig.get("BOOTSTRAP_SERVERS").toString());
 
         // oAuth
-        /*
-        adminClientConfig.put(Constants.SECURITY_PROTOCOL_CONFIG, "SASL_SSL");
+
+        adminClientConfig.put(Constants.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
         adminClientConfig.put(Constants.SECURITY_SASL_MECHANISM, "OAUTHBEARER");
-        adminClientConfig.put(Constants.SECURITY_SASL_JAAS_CONFIG, "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required ;");
+        //adminClientConfig.put(Constants.SECURITY_SASL_JAAS_CONFIG, "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required oauth.access.token=" + Constants.TOKEN_PLACEHOLDER + " ;");
         adminClientConfig.put(Constants.SECURITY_SASL_LOGIN_CLASS, "io.strimzi.kafka.oauth.client.JaasClientOauthLoginCallbackHandler");
-         */
+
 
         // admin client
         adminClientConfig.put(Constants.METADATA_MAX_AGE_CONFIG, "30000");
