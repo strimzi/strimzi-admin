@@ -82,7 +82,7 @@ public class TopicDescriptionHandler {
                             inSyncReplicas.add(inSyncReplica);
                         });
 
-                        partition.setPartition(partition.getPartition());
+                        partition.setPartition(part.getPartition());
                         partition.setLeader(leader);
                         partition.setReplicas(replicas);
                         partition.setIsr(inSyncReplicas);
