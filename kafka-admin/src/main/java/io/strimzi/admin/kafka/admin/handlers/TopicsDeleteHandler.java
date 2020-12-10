@@ -9,11 +9,14 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.graphql.VertxDataFetcher;
 import org.apache.kafka.common.config.SaslConfigs;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 import java.util.Map;
 
 public class TopicsDeleteHandler {
+    protected static final Logger log = LogManager.getLogger(TopicsDeleteHandler.class);
 
     public static VertxDataFetcher deleteTopics(Map<String, Object> acConfig, Vertx vertx) {
         VertxDataFetcher<List<String>> dataFetcher = new VertxDataFetcher<>((environment, prom) -> {

@@ -12,6 +12,8 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.graphql.VertxDataFetcher;
 import io.vertx.kafka.admin.NewTopic;
 import org.apache.kafka.common.config.SaslConfigs;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 public class TopicCreateHandler {
+    protected static final Logger log = LogManager.getLogger(TopicCreateHandler.class);
 
     public static VertxDataFetcher createTopic(Map<String, Object> acConfig, Vertx vertx) {
         VertxDataFetcher<Types.Topic> dataFetcher = new VertxDataFetcher<>((environment, prom) -> {

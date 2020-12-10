@@ -15,6 +15,8 @@ import io.vertx.kafka.admin.Config;
 import io.vertx.kafka.admin.ConfigEntry;
 import io.vertx.kafka.client.common.ConfigResource;
 import org.apache.kafka.common.config.SaslConfigs;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 public class TopicDescriptionHandler {
+    protected static final Logger log = LogManager.getLogger(TopicDescriptionHandler.class);
 
     public static VertxDataFetcher topicDescriptionFetch(Map<String, Object> acConfig, Vertx vertx) {
         VertxDataFetcher<Types.Topic> dataFetcher = new VertxDataFetcher<>((environment, prom) -> {

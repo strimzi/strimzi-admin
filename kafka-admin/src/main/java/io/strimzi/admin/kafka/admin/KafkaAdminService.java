@@ -95,9 +95,14 @@ public class KafkaAdminService implements GraphQLRegistration {
         adminClientConfig.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, envConfig.get(PREFIX + "BOOTSTRAP_SERVERS").toString());
 
         // oAuth
-        adminClientConfig.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
-        adminClientConfig.put(SaslConfigs.SASL_MECHANISM, "OAUTHBEARER");
-        adminClientConfig.put(SaslConfigs.SASL_LOGIN_CALLBACK_HANDLER_CLASS, "io.strimzi.kafka.oauth.client.JaasClientOauthLoginCallbackHandler");
+        if (System.getenv().get(PREFIX + "OAUTH_DISABLED") == null || !System.getenv().get(PREFIX + "OAUTH_DISABLED").equalsIgnoreCase("true")) {
+            log.info("oAuth enabled");
+            adminClientConfig.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT");
+            adminClientConfig.put(SaslConfigs.SASL_MECHANISM, "OAUTHBEARER");
+            adminClientConfig.put(SaslConfigs.SASL_LOGIN_CALLBACK_HANDLER_CLASS, "io.strimzi.kafka.oauth.client.JaasClientOauthLoginCallbackHandler");
+        } else {
+            log.info("oAuth disabled");
+        }
         // admin client
         adminClientConfig.put(AdminClientConfig.METADATA_MAX_AGE_CONFIG, "30000");
         adminClientConfig.put(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, "10000");

@@ -11,6 +11,8 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.graphql.VertxDataFetcher;
 import org.apache.kafka.common.config.SaslConfigs;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +24,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class TopicListHandler {
+    protected static final Logger log = LogManager.getLogger(TopicListHandler.class);
 
     public static VertxDataFetcher topicListFetch(Map<String, Object> acConfig, Vertx vertx) {
         VertxDataFetcher<Types.TopicList> dataFetcher = new VertxDataFetcher<>((env, prom) -> {
