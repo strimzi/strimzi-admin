@@ -38,6 +38,7 @@ public class TopicDescriptionHandler {
                 acw.open();
             } catch (Exception e) {
                 prom.fail(e);
+                log.error(e);
                 return;
             }
 
@@ -58,6 +59,7 @@ public class TopicDescriptionHandler {
 
             describeTopicsPromise.future().onFailure(
                 fail -> {
+                    log.error(fail);
                     prom.fail(fail);
                     return;
                 }).<Types.Topic>compose(topics -> {

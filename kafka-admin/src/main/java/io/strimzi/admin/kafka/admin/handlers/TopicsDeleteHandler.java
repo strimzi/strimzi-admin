@@ -30,12 +30,14 @@ public class TopicsDeleteHandler {
                 acw.open();
             } catch (Exception e) {
                 prom.fail(e);
+                log.error(e);
                 return;
             }
 
             List<String> topicsToDelete = environment.getArgument("names");
             acw.deleteTopics(topicsToDelete, res -> {
                 if (res.failed()) {
+                    log.error(res.cause());
                     prom.fail(res.cause());
                     acw.close();
                 } else {

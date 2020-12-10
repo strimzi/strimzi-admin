@@ -28,9 +28,7 @@ public class AdminClientWrapper {
 
     protected final Vertx vertx;
     protected final Map<String, Object> config;
-
     private Handler<AdminClientWrapper> closeHandler;
-
     private KafkaAdminClient adminClient;
 
     /**
@@ -58,6 +56,7 @@ public class AdminClientWrapper {
         try {
             this.adminClient = KafkaAdminClient.create(this.vertx, props);
         } catch (Exception e) {
+            log.error("Failed to create Kafka AdminClient", e.getCause());
             throw e;
         }
     }

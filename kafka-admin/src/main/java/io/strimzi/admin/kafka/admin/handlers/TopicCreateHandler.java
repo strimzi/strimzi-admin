@@ -36,6 +36,7 @@ public class TopicCreateHandler {
                 acw.open();
             } catch (Exception e) {
                 prom.fail(e);
+                log.error(e);
                 return;
             }
 
@@ -74,6 +75,7 @@ public class TopicCreateHandler {
             Promise createTopicPromise = Promise.promise();
             acw.createTopic(Collections.singletonList(newKafkaTopic), res -> {
                 if (res.failed()) {
+                    log.error(res.cause());
                     prom.fail(res.cause());
                 } else {
                     createTopicPromise.complete(res);
