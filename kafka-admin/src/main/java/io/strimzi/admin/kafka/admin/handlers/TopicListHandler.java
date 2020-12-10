@@ -29,8 +29,14 @@ public class TopicListHandler {
     public static VertxDataFetcher topicListFetch(Map<String, Object> acConfig, Vertx vertx) {
         VertxDataFetcher<Types.TopicList> dataFetcher = new VertxDataFetcher<>((env, prom) -> {
             RoutingContext rc = env.getContext();
-            if (rc.request().getHeader("Authorization") != null) {
-                acConfig.put(SaslConfigs.SASL_JAAS_CONFIG, "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required oauth.access.token=" + rc.request().getHeader("Authorization") + " ;");
+            String token = rc.request().getHeader("Authorization");
+            if (token != null) {
+                if (token.startsWith("Bearer ")) {
+                    token = token.substring("Bearer ".length());
+                }
+                log.info("auth token is {}", token);
+                log.info(SaslConfigs.SASL_JAAS_CONFIG + "is org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required oauth.access.token=\"" + token + " ;\"");
+                acConfig.put(SaslConfigs.SASL_JAAS_CONFIG, "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required oauth.access.token=\"" + token + " ;\"");
             }
 
             AdminClientWrapper acw = new AdminClientWrapper(vertx, acConfig);

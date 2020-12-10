@@ -49,9 +49,8 @@ public class AdminClientWrapper {
 
     public void open() {
         // create an admin client
-        Map<String, Object> kafkaConfig = this.config;
         Properties props = new Properties();
-        props.putAll(kafkaConfig);
+        props.putAll(this.config);
 
         try {
             this.adminClient = KafkaAdminClient.create(this.vertx, props);
