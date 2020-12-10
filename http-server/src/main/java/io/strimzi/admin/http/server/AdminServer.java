@@ -56,7 +56,7 @@ public class AdminServer extends AbstractVerticle {
 
                 router.mountSubRouter(mountPoint, subRouter);
 
-                LOGGER.info("Module routes mounted on path {}.", mountPoint);
+                LOGGER.info("Module routes mounted on path '{}'.", mountPoint);
             })).map(router);
     }
 }

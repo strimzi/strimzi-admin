@@ -138,6 +138,7 @@
                             <failOnWarning>true</failOnWarning>
                             <ignoredDependencies>
                                 <ignoredDependency>io.strimzi:kafka-oauth-client</ignoredDependency>
+                                <ignoredDependency>org.apache.logging.log4j:log4j-core</ignoredDependency>
                             </ignoredDependencies>
                         </configuration>
                     </execution>

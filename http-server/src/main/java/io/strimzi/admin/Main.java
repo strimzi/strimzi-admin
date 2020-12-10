@@ -31,7 +31,7 @@ public class Main {
             });
     }
 
-    static Future<String> run(final Vertx vertx) throws Exception {
+    static Future<String> run(final Vertx vertx) {
         final Promise<String> promise = Promise.promise();
 
         final AdminServer adminServer = new AdminServer();
