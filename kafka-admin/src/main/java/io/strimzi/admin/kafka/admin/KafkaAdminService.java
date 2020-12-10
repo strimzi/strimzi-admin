@@ -43,6 +43,7 @@ public class KafkaAdminService implements GraphQLRegistration {
 
     public KafkaAdminService() throws Exception {
         config = envVarsToAdminClientConfig(PREFIX);
+        logConfiguration();
     }
 
     @Override
@@ -104,6 +105,13 @@ public class KafkaAdminService implements GraphQLRegistration {
         adminClientConfig.put(AdminClientConfig.DEFAULT_API_TIMEOUT_MS_CONFIG, "30000");
 
         return adminClientConfig;
+    }
+
+    private void logConfiguration() {
+        log.info("AdminClient configuration:");
+        config.entrySet().forEach(entry -> {
+            log.info("\t{} = {}", entry.getKey(), entry.getValue());
+        });
     }
 }
 
