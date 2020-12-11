@@ -8,4 +8,6 @@
 
     <!-- Note that [/\\] must be used as the path separator for cross-platform support -->
 
+    <suppress checks="MethodLength|JavaNCSS"
+              files="io[/\\]strimzi[/\\]admin[/\\]kafka[/\\]admin[/\\]handlers[/\\]TopicListHandler.java"/>
 </suppressions>
