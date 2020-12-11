@@ -41,8 +41,11 @@ public class TopicCreateHandler extends CommonHandler {
             try {
                 acw.open();
             } catch (Exception e) {
-                prom.fail(e);
                 log.error(e);
+                if (acw != null) {
+                    acw.close();
+                }
+                prom.fail(e);
                 return;
             }
 

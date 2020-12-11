@@ -39,6 +39,9 @@ public class CommonHandler {
         } catch (Exception e) {
             prom.fail(e);
             log.error(e);
+            if (acw != null) {
+                acw.close();
+            }
             return null;
         }
     }
