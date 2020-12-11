@@ -15,7 +15,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.List;
 import java.util.Map;
 
-public class TopicsDeleteHandler {
+public class TopicsDeleteHandler extends CommonHandler {
     protected static final Logger log = LogManager.getLogger(TopicsDeleteHandler.class);
 
     public static VertxDataFetcher deleteTopics(Map<String, Object> acConfig, Vertx vertx) {
@@ -27,8 +27,8 @@ public class TopicsDeleteHandler {
                     token = token.substring("Bearer ".length());
                 }
                 log.info("auth token is {}", token);
-                log.info(SaslConfigs.SASL_JAAS_CONFIG + "is org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required oauth.access.token=\"" + token + " ;\"");
-                acConfig.put(SaslConfigs.SASL_JAAS_CONFIG, "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required oauth.access.token=\"" + token + " ;\"");
+                log.info(SaslConfigs.SASL_JAAS_CONFIG + "is org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required oauth.access.token=\"" + token + "\";");
+                acConfig.put(SaslConfigs.SASL_JAAS_CONFIG, "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required oauth.access.token=\"" + token + "\";");
             }
 
             AdminClientWrapper acw = new AdminClientWrapper(vertx, acConfig);
