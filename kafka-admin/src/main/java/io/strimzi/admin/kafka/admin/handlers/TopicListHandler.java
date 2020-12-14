@@ -74,8 +74,8 @@ public class TopicListHandler extends CommonHandler {
             describeTopicsNamesPromise.future().onFailure(
                 fail -> {
                     log.error(fail);
-                    describeTopicsNamesPromise.fail(fail);
                     prom.fail(fail);
+                    acw.close();
                     return;
                 })
                     .compose(topics -> {

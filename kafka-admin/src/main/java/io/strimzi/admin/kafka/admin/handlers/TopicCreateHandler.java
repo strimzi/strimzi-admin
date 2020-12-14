@@ -86,6 +86,7 @@ public class TopicCreateHandler extends CommonHandler {
                 if (res.failed()) {
                     log.error(res.cause());
                     prom.fail(res.cause());
+                    acw.close();
                 } else {
                     createTopicPromise.complete(res);
                 }

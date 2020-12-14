@@ -106,7 +106,6 @@ public class KafkaAdminService implements GraphQLRegistration {
         // admin client
         adminClientConfig.put(AdminClientConfig.METADATA_MAX_AGE_CONFIG, "30000");
         adminClientConfig.put(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, "10000");
-        adminClientConfig.put(AdminClientConfig.RETRIES_CONFIG, "3");
         adminClientConfig.put(AdminClientConfig.DEFAULT_API_TIMEOUT_MS_CONFIG, "30000");
 
         return adminClientConfig;

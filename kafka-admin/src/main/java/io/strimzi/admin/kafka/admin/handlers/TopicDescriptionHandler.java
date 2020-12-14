@@ -58,8 +58,8 @@ public class TopicDescriptionHandler extends CommonHandler {
             Promise<Map<String, io.vertx.kafka.admin.TopicDescription>> describeTopicsPromise = Promise.promise();
             acw.describeTopics(Collections.singletonList(topicToDescribe), result -> {
                 if (result.failed()) {
-                    describeTopicsPromise.fail(result.cause());
                     prom.fail(result.cause());
+                    acw.close();
                 }
                 describeTopicsPromise.complete(result.result());
             });
