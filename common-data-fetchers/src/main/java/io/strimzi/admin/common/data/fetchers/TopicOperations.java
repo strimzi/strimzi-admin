@@ -10,6 +10,7 @@ import io.vertx.core.Promise;
 import io.vertx.kafka.admin.Config;
 import io.vertx.kafka.admin.ConfigEntry;
 import io.vertx.kafka.admin.NewTopic;
+import io.vertx.kafka.admin.TopicDescription;
 import io.vertx.kafka.client.common.ConfigResource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -92,54 +93,14 @@ public class TopicOperations {
                 return;
             }).<Types.Topic>compose(topics -> {
                 io.vertx.kafka.admin.TopicDescription topicDesc = topics.get(topicToDescribe);
-                Types.Topic topic = new Types.Topic();
-                topic.setName(topicDesc.getName());
-                topic.setIsInternal(topicDesc.isInternal());
-                List<Types.Partition> partitions = new ArrayList<>();
-                topicDesc.getPartitions().forEach(part -> {
-                    Types.Partition partition = new Types.Partition();
-                    Types.Node leader = new Types.Node();
-                    leader.setId(part.getLeader().getId());
-
-                    List<Types.Node> replicas = new ArrayList<>();
-                    part.getReplicas().forEach(rep -> {
-                        Types.Node replica = new Types.Node();
-                        replica.setId(rep.getId());
-                        replicas.add(replica);
-                    });
-
-                    List<Types.Node> inSyncReplicas = new ArrayList<>();
-                    part.getIsr().forEach(isr -> {
-                        Types.Node inSyncReplica = new Types.Node();
-                        inSyncReplica.setId(isr.getId());
-                        inSyncReplicas.add(inSyncReplica);
-                    });
-
-                    partition.setPartition(part.getPartition());
-                    partition.setLeader(leader);
-                    partition.setReplicas(replicas);
-                    partition.setIsr(inSyncReplicas);
-                    partitions.add(partition);
-                });
-                topic.setPartitions(partitions);
-                return Future.succeededFuture(topic);
+                return Future.succeededFuture(getTopicDesc(topicDesc));
             }).onComplete(topic -> {
                 Types.Topic t = topic.result();
-
                 ConfigResource resource = new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, topicToDescribe);
                 acw.describeConfigs(Collections.singletonList(resource), describeTopicConfigPromise);
                 describeTopicConfigPromise.future().onComplete(topics -> {
                     Config cfg = topics.result().get(resource);
-                    List<ConfigEntry> entries = cfg.getEntries();
-
-                    List<Types.ConfigEntry> topicConfigEntries = new ArrayList<>();
-                    entries.stream().forEach(entry -> {
-                        Types.ConfigEntry ce = new Types.ConfigEntry();
-                        ce.setKey(entry.getName());
-                        ce.setValue(entry.getValue());
-                        topicConfigEntries.add(ce);
-                    });
-                    t.setConfig(topicConfigEntries);
+                    t.setConfig(getTopicConf(cfg));
                     prom.complete(t);
                     acw.close();
                 });
@@ -174,37 +135,7 @@ public class TopicOperations {
                 return describeTopicsPromise.future();
             }).<List<Types.Topic>>compose(topics -> {
                 topics.entrySet().forEach(topicDesc -> {
-                    Types.Topic topic = new Types.Topic();
-                    topic.setName(topicDesc.getValue().getName());
-                    topic.setIsInternal(topicDesc.getValue().isInternal());
-                    List<Types.Partition> partitions = new ArrayList<>();
-                    topicDesc.getValue().getPartitions().forEach(part -> {
-                        Types.Partition partition = new Types.Partition();
-                        Types.Node leader = new Types.Node();
-                        leader.setId(part.getLeader().getId());
-
-                        List<Types.Node> replicas = new ArrayList<>();
-                        part.getReplicas().forEach(rep -> {
-                            Types.Node replica = new Types.Node();
-                            replica.setId(rep.getId());
-                            replicas.add(replica);
-                        });
-
-                        List<Types.Node> inSyncReplicas = new ArrayList<>();
-                        part.getIsr().forEach(isr -> {
-                            Types.Node inSyncReplica = new Types.Node();
-                            inSyncReplica.setId(isr.getId());
-                            inSyncReplicas.add(inSyncReplica);
-                        });
-
-                        partition.setPartition(part.getPartition());
-                        partition.setLeader(leader);
-                        partition.setReplicas(replicas);
-                        partition.setIsr(inSyncReplicas);
-                        partitions.add(partition);
-                    });
-                    topic.setPartitions(partitions);
-                    partialTopicDescriptions.add(topic);
+                    partialTopicDescriptions.add(getTopicDesc(topicDesc.getValue()));
                 });
                 return Future.succeededFuture(partialTopicDescriptions);
             }).onComplete(descriptions -> {
@@ -221,16 +152,7 @@ public class TopicOperations {
                     descriptions.result().forEach(topicWithDescription -> {
                         ConfigResource resource = new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, topicWithDescription.getName());
                         Config cfg = topicsConfigurations.result().get(resource);
-                        List<ConfigEntry> entries = cfg.getEntries();
-
-                        List<Types.ConfigEntry> topicConfigEntries = new ArrayList<>();
-                        entries.stream().forEach(entry -> {
-                            Types.ConfigEntry ce = new Types.ConfigEntry();
-                            ce.setKey(entry.getName());
-                            ce.setValue(entry.getValue());
-                            topicConfigEntries.add(ce);
-                        });
-                        topicWithDescription.setConfig(topicConfigEntries);
+                        topicWithDescription.setConfig(getTopicConf(cfg));
                         fullTopicDescriptions.add(topicWithDescription);
                     });
                     Types.TopicList topicList = new Types.TopicList();
@@ -269,5 +191,56 @@ public class TopicOperations {
                 }
             }
         };
+    }
+
+    private static List<Types.ConfigEntry> getTopicConf(Config cfg) {
+        List<ConfigEntry> entries = cfg.getEntries();
+        List<Types.ConfigEntry> topicConfigEntries = new ArrayList<>();
+        entries.stream().forEach(entry -> {
+            Types.ConfigEntry ce = new Types.ConfigEntry();
+            ce.setKey(entry.getName());
+            ce.setValue(entry.getValue());
+            topicConfigEntries.add(ce);
+        });
+        return topicConfigEntries;
+    }
+
+    /**
+     * @param topicDesc topic to describe
+     * @returntopic description without configuration
+     */
+    private static Types.Topic getTopicDesc(TopicDescription topicDesc) {
+        Types.Topic topic = new Types.Topic();
+        topic.setName(topicDesc.getName());
+        topic.setIsInternal(topicDesc.isInternal());
+        List<Types.Partition> partitions = new ArrayList<>();
+        topicDesc.getPartitions().forEach(part -> {
+            Types.Partition partition = new Types.Partition();
+            Types.Node leader = new Types.Node();
+            leader.setId(part.getLeader().getId());
+
+            List<Types.Node> replicas = new ArrayList<>();
+            part.getReplicas().forEach(rep -> {
+                Types.Node replica = new Types.Node();
+                replica.setId(rep.getId());
+                replicas.add(replica);
+            });
+
+            List<Types.Node> inSyncReplicas = new ArrayList<>();
+            part.getIsr().forEach(isr -> {
+                Types.Node inSyncReplica = new Types.Node();
+                inSyncReplica.setId(isr.getId());
+                inSyncReplicas.add(inSyncReplica);
+            });
+
+            partition.setPartition(part.getPartition());
+            partition.setLeader(leader);
+            partition.setReplicas(replicas);
+            partition.setIsr(inSyncReplicas);
+            partitions.add(partition);
+        });
+        topic.setPartitions(partitions);
+
+        return topic;
     }
 }
