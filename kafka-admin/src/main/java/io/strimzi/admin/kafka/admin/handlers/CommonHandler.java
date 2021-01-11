@@ -5,7 +5,7 @@
 package io.strimzi.admin.kafka.admin.handlers;
 
 import graphql.schema.DataFetchingEnvironment;
-import io.strimzi.admin.kafka.admin.AdminClientWrapper;
+import io.strimzi.admin.common.data.fetchers.AdminClientWrapper;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.RoutingContext;
@@ -18,15 +18,13 @@ import java.util.Map;
 public class CommonHandler {
     protected static final Logger log = LogManager.getLogger(CommonHandler.class);
 
-    protected static void adjustToken(Map acConfig, DataFetchingEnvironment env) {
+    protected static void setOAuthToken(Map acConfig, DataFetchingEnvironment env) {
         RoutingContext rc = env.getContext();
         String token = rc.request().getHeader("Authorization");
         if (token != null) {
             if (token.startsWith("Bearer ")) {
                 token = token.substring("Bearer ".length());
             }
-            log.info("auth token is {}", token);
-            log.info(SaslConfigs.SASL_JAAS_CONFIG + "is org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required oauth.access.token=\"" + token + "\";");
             acConfig.put(SaslConfigs.SASL_JAAS_CONFIG, "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required oauth.access.token=\"" + token + "\";");
         }
     }
