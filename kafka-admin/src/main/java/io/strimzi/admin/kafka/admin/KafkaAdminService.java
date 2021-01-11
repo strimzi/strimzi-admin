@@ -10,6 +10,7 @@ import graphql.schema.idl.TypeDefinitionRegistry;
 import io.strimzi.admin.graphql.registration.GraphQLRegistration;
 import io.strimzi.admin.graphql.registration.GraphQLRegistrationDescriptor;
 import io.strimzi.admin.kafka.admin.handlers.TopicCreateHandler;
+import io.strimzi.admin.kafka.admin.handlers.TopicUpdateHandler;
 import io.strimzi.admin.kafka.admin.handlers.TopicsDeleteHandler;
 import io.strimzi.admin.kafka.admin.handlers.TopicDescriptionHandler;
 import io.strimzi.admin.kafka.admin.handlers.TopicListHandler;
@@ -76,6 +77,7 @@ public class KafkaAdminService implements GraphQLRegistration {
                     .type("Mutation", typeWiring -> typeWiring
                             .dataFetcher("deleteTopics", TopicsDeleteHandler.deleteTopics(config, vertx))
                             .dataFetcher("createTopic", TopicCreateHandler.createTopic(config, vertx))
+                            .dataFetcher("updateTopic", TopicUpdateHandler.updateTopic(config, vertx))
                     )
                     .build();
                 promise.complete(GraphQLRegistrationDescriptor.create(schema, query));

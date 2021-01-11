@@ -222,6 +222,27 @@ public class Types {
         }
     }
 
+    public static class UpdatedTopic {
+        private String name;
+        private List<NewTopicConfigEntry> config;
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public List<NewTopicConfigEntry> getConfig() {
+            return config;
+        }
+
+        public void setConfig(List<NewTopicConfigEntry> config) {
+            this.config = config;
+        }
+    }
+
     public static class PageRequest {
         private Integer limit;
         private Integer offset;

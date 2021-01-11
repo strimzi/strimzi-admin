@@ -7,6 +7,7 @@ extend type Query {
 extend type Mutation {
     createTopic(input: NewTopic!): Topic!
     deleteTopics(names: [String]): [String]
+    updateTopic(input: UpdatedTopic!): Topic!
 }
 
 type Topic {
@@ -67,5 +68,10 @@ input NewTopic {
     name: String!
     numPartitions: Int!
     replicationFactor: Int!
+    config: [NewTopicConfigEntry]
+}
+
+input UpdatedTopic {
+    name: String!
     config: [NewTopicConfigEntry]
 }

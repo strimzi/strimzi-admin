@@ -76,14 +76,7 @@ public class TopicOperations {
 
     public static void describeTopic(AdminClientWrapper acw, Promise prom, String topicToDescribe) {
         Promise<Map<String, io.vertx.kafka.admin.TopicDescription>> describeTopicsPromise = Promise.promise();
-        acw.describeTopics(Collections.singletonList(topicToDescribe), result -> {
-            if (result.failed()) {
-                prom.fail(result.cause());
-                acw.close();
-            }
-            describeTopicsPromise.complete(result.result());
-        });
-
+        acw.describeTopics(Collections.singletonList(topicToDescribe), describeTopicsPromise);
         Promise<Map<ConfigResource, Config>> describeTopicConfigPromise = Promise.promise();
 
         describeTopicsPromise.future().onFailure(
@@ -174,6 +167,54 @@ public class TopicOperations {
                 prom.complete(topicsToDelete);
                 acw.close();
             }
+        });
+    }
+
+    public static void updateTopic(AdminClientWrapper acw, Types.UpdatedTopic topicToUpdate, Promise prom) {
+
+        List<ConfigEntry> ceList = new ArrayList<>();
+        topicToUpdate.getConfig().stream().forEach(cfgEntry -> {
+            ConfigEntry ce = new ConfigEntry(cfgEntry.getKey(), cfgEntry.getValue());
+            ceList.add(ce);
+        });
+        Config cfg = new Config(ceList);
+
+        ConfigResource resource = new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, topicToUpdate.getName());
+        Promise<Void> updateTopicPromise = Promise.promise();
+        acw.updateTopics(Collections.singletonMap(resource, cfg), result -> {
+            if (result.failed()) {
+                prom.fail(result.cause());
+                acw.close();
+            }
+            updateTopicPromise.complete(result.result());
+        });
+
+        Promise<Map<String, io.vertx.kafka.admin.TopicDescription>> describeTopicsPromise = Promise.promise();
+        acw.describeTopics(Collections.singletonList(topicToUpdate.getName()), result -> {
+            if (result.failed()) {
+                prom.fail(result.cause());
+                acw.close();
+            }
+            describeTopicsPromise.complete(result.result());
+        });
+
+        Promise<Map<ConfigResource, Config>> describeTopicConfigPromise = Promise.promise();
+
+        updateTopicPromise.future().onComplete(updated -> {
+            describeTopicsPromise.future()
+                .<Types.Topic>compose(topics -> {
+                    io.vertx.kafka.admin.TopicDescription topicDesc = topics.get(topicToUpdate.getName());
+                    return Future.succeededFuture(getTopicDesc(topicDesc));
+                }).onComplete(topic -> {
+                    Types.Topic t = topic.result();
+                    acw.describeConfigs(Collections.singletonList(resource), describeTopicConfigPromise);
+                    describeTopicConfigPromise.future().onComplete(topics -> {
+                        Config cfgDesc = topics.result().get(resource);
+                        t.setConfig(getTopicConf(cfgDesc));
+                        prom.complete(t);
+                        acw.close();
+                    });
+                });
         });
     }
 
