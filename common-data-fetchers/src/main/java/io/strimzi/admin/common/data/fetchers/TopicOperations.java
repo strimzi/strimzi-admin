@@ -75,14 +75,25 @@ public class TopicOperations {
     }
 
     public static void describeTopic(AdminClientWrapper acw, Promise prom, String topicToDescribe) {
+        Promise<Types.Topic> describeTopicConfigAndDescPromise = getTopicDescAndConf(acw, topicToDescribe);
+        describeTopicConfigAndDescPromise.future()
+            .onComplete(updated -> {
+                prom.complete(updated.result());
+                acw.close();
+            });
+    }
+
+    private static Promise<Types.Topic> getTopicDescAndConf(AdminClientWrapper acw, String topicToDescribe) {
+        Promise result = Promise.promise();
         Promise<Map<String, io.vertx.kafka.admin.TopicDescription>> describeTopicsPromise = Promise.promise();
-        acw.describeTopics(Collections.singletonList(topicToDescribe), describeTopicsPromise);
         Promise<Map<ConfigResource, Config>> describeTopicConfigPromise = Promise.promise();
+
+        acw.describeTopics(Collections.singletonList(topicToDescribe), describeTopicsPromise);
 
         describeTopicsPromise.future().onFailure(
             fail -> {
                 log.error(fail);
-                prom.fail(fail);
+                result.fail(fail);
                 return;
             }).<Types.Topic>compose(topics -> {
                 io.vertx.kafka.admin.TopicDescription topicDesc = topics.get(topicToDescribe);
@@ -94,10 +105,10 @@ public class TopicOperations {
                 describeTopicConfigPromise.future().onComplete(topics -> {
                     Config cfg = topics.result().get(resource);
                     t.setConfig(getTopicConf(cfg));
-                    prom.complete(t);
-                    acw.close();
+                    result.complete(t);
                 });
             });
+        return result;
     }
 
     public static void getList(AdminClientWrapper acw, Promise prom, Pattern pattern) {
@@ -139,6 +150,7 @@ public class TopicOperations {
                     configResourceList.add(resource);
                 });
 
+                // cannot use getTopicDescAndConf because we need to get list
                 acw.describeConfigs(configResourceList, describeTopicConfigPromise);
                 describeTopicConfigPromise.future().onComplete(topicsConfigurations -> {
                     List<Types.Topic> fullTopicDescriptions = new ArrayList<>();
@@ -189,33 +201,14 @@ public class TopicOperations {
             updateTopicPromise.complete(result.result());
         });
 
-        Promise<Map<String, io.vertx.kafka.admin.TopicDescription>> describeTopicsPromise = Promise.promise();
-        acw.describeTopics(Collections.singletonList(topicToUpdate.getName()), result -> {
-            if (result.failed()) {
-                prom.fail(result.cause());
-                acw.close();
-            }
-            describeTopicsPromise.complete(result.result());
-        });
+        Promise<Types.Topic> describeTopicConfigAndDescPromise = getTopicDescAndConf(acw, topicToUpdate.getName());
 
-        Promise<Map<ConfigResource, Config>> describeTopicConfigPromise = Promise.promise();
-
-        updateTopicPromise.future().onComplete(updated -> {
-            describeTopicsPromise.future()
-                .<Types.Topic>compose(topics -> {
-                    io.vertx.kafka.admin.TopicDescription topicDesc = topics.get(topicToUpdate.getName());
-                    return Future.succeededFuture(getTopicDesc(topicDesc));
-                }).onComplete(topic -> {
-                    Types.Topic t = topic.result();
-                    acw.describeConfigs(Collections.singletonList(resource), describeTopicConfigPromise);
-                    describeTopicConfigPromise.future().onComplete(topics -> {
-                        Config cfgDesc = topics.result().get(resource);
-                        t.setConfig(getTopicConf(cfgDesc));
-                        prom.complete(t);
-                        acw.close();
-                    });
+        updateTopicPromise.future()
+                .compose(i -> describeTopicConfigAndDescPromise.future())
+                .onComplete(updated -> {
+                    prom.complete(updated.result());
+                    acw.close();
                 });
-        });
     }
 
     private static Predicate<String> byTopicName(Pattern pattern, Promise prom) {

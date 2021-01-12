@@ -95,7 +95,7 @@ public class AdminClientWrapper {
      * Updates a topic.
      */
     public void updateTopics(Map<ConfigResource, Config> topicsToUpdate, Handler<AsyncResult<Void>> completionHandler) {
-        log.info("Delete topics");
+        log.info("Update topics");
         this.adminClient.alterConfigs(topicsToUpdate, completionHandler);
     }
 
