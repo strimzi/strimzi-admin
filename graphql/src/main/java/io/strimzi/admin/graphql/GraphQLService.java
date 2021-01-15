@@ -119,9 +119,7 @@ public class GraphQLService implements RouteRegistration {
         final ServiceLoader<GraphQLRegistration> loader = ServiceLoader.load(GraphQLRegistration.class);
         final List<Future<GraphQLRegistrationDescriptor>> registrationDescriptors = new ArrayList<>();
 
-        loader.forEach(graphQLRegistration -> {
-            registrationDescriptors.add(graphQLRegistration.getRegistrationDescriptor(vertx));
-        });
+        loader.forEach(graphQLRegistration -> registrationDescriptors.add(graphQLRegistration.getRegistrationDescriptor(vertx)));
 
         CompositeFuture.all(new ArrayList<>(registrationDescriptors))
             .onSuccess(cf -> {

@@ -6,7 +6,7 @@ package io.strimzi.admin.kafka.admin.handlers;
 
 import graphql.schema.DataFetchingEnvironment;
 import io.strimzi.admin.common.data.fetchers.AdminClientWrapper;
-import io.vertx.core.Promise;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.kafka.common.config.SaslConfigs;
@@ -29,18 +29,17 @@ public class CommonHandler {
         }
     }
 
-    protected static AdminClientWrapper createAdminClient(Vertx vertx, Map acConfig, Promise prom) {
+    protected static Future<AdminClientWrapper> createAdminClient(Vertx vertx, Map acConfig) {
         AdminClientWrapper acw = new AdminClientWrapper(vertx, acConfig);
         try {
             acw.open();
-            return acw;
+            return Future.succeededFuture(acw);
         } catch (Exception e) {
-            prom.fail(e);
             log.error(e);
             if (acw != null) {
                 acw.close();
             }
-            return null;
+            return Future.failedFuture(e);
         }
     }
 }

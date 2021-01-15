@@ -6,6 +6,7 @@ package io.strimzi.admin.kafka.admin.handlers;
 
 import io.strimzi.admin.common.data.fetchers.AdminClientWrapper;
 import io.strimzi.admin.common.data.fetchers.TopicOperations;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.handler.graphql.VertxDataFetcher;
 import org.apache.logging.log4j.LogManager;
@@ -20,7 +21,7 @@ public class TopicsDeleteHandler extends CommonHandler {
     public static VertxDataFetcher deleteTopics(Map<String, Object> acConfig, Vertx vertx) {
         VertxDataFetcher<List<String>> dataFetcher = new VertxDataFetcher<>((environment, prom) -> {
             setOAuthToken(acConfig, environment);
-            AdminClientWrapper acw = createAdminClient(vertx, acConfig, prom);
+            Future<AdminClientWrapper> acw = createAdminClient(vertx, acConfig);
 
             List<String> topicsToDelete = environment.getArgument("names");
             TopicOperations.deleteTopics(acw, topicsToDelete, prom);

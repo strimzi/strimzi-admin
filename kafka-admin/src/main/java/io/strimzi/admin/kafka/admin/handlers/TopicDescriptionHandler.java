@@ -7,6 +7,7 @@ package io.strimzi.admin.kafka.admin.handlers;
 import io.strimzi.admin.common.data.fetchers.AdminClientWrapper;
 import io.strimzi.admin.common.data.fetchers.TopicOperations;
 import io.strimzi.admin.common.data.fetchers.model.Types;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.handler.graphql.VertxDataFetcher;
 import org.apache.logging.log4j.LogManager;
@@ -20,7 +21,7 @@ public class TopicDescriptionHandler extends CommonHandler {
     public static VertxDataFetcher topicDescriptionFetch(Map<String, Object> acConfig, Vertx vertx) {
         VertxDataFetcher<Types.Topic> dataFetcher = new VertxDataFetcher<>((environment, prom) -> {
             setOAuthToken(acConfig, environment);
-            AdminClientWrapper acw = createAdminClient(vertx, acConfig, prom);
+            Future<AdminClientWrapper> acw = createAdminClient(vertx, acConfig);
 
             String topicToDescribe = environment.getArgument("name");
             if (topicToDescribe == null || topicToDescribe.isEmpty()) {
@@ -28,7 +29,6 @@ public class TopicDescriptionHandler extends CommonHandler {
             }
 
             TopicOperations.describeTopic(acw, prom, topicToDescribe);
-
         });
         return dataFetcher;
     }
