@@ -40,7 +40,7 @@ public class KafkaAdminService implements GraphQLRegistration {
     protected final Logger log = LogManager.getLogger(KafkaAdminService.class);
     private static final String KAFKA_ADMIN_SCHEMA_LOCATION = "graphql-schema/kafka-admin.graphql";
     private static final String PREFIX = "KAFKA_ADMIN_";
-    private Map<String, Object> config;
+    private static Map<String, Object> config;
 
     public KafkaAdminService() throws Exception {
         config = envVarsToAdminClientConfig(PREFIX);
@@ -71,13 +71,13 @@ public class KafkaAdminService implements GraphQLRegistration {
 
                 final RuntimeWiring query = RuntimeWiring.newRuntimeWiring()
                     .type("Query", typeWiring -> typeWiring
-                        .dataFetcher("topic", TopicDescriptionHandler.topicDescriptionFetch(config, vertx))
-                        .dataFetcher("topicList", TopicListHandler.topicListFetch(config, vertx))
+                        .dataFetcher("topic", TopicDescriptionHandler.topicDescriptionFetcher(config, vertx))
+                        .dataFetcher("topicList", TopicListHandler.topicListFetcher(config, vertx))
                     )
                     .type("Mutation", typeWiring -> typeWiring
-                            .dataFetcher("deleteTopics", TopicsDeleteHandler.deleteTopics(config, vertx))
-                            .dataFetcher("createTopic", TopicCreateHandler.createTopic(config, vertx))
-                            .dataFetcher("updateTopic", TopicUpdateHandler.updateTopic(config, vertx))
+                            .dataFetcher("deleteTopics", TopicsDeleteHandler.deleteTopicsFetcher(config, vertx))
+                            .dataFetcher("createTopic", TopicCreateHandler.createTopicFetcher(config, vertx))
+                            .dataFetcher("updateTopic", TopicUpdateHandler.updateTopicFetcher(config, vertx))
                     )
                     .build();
                 promise.complete(GraphQLRegistrationDescriptor.create(schema, query));
@@ -118,6 +118,10 @@ public class KafkaAdminService implements GraphQLRegistration {
         config.entrySet().forEach(entry -> {
             log.info("\t{} = {}", entry.getKey(), entry.getValue());
         });
+    }
+
+    public static Map getAcConfig() {
+        return config;
     }
 }
 

@@ -16,6 +16,7 @@
         <module>kafka-admin</module>
         <module>graphql</module>
         <module>common-data-fetchers</module>
+        <module>rest</module>
     </modules>
 
     <properties>
@@ -30,6 +31,8 @@
         <graphql-java.version>16.1</graphql-java.version>
         <kafka.version>2.6.0</kafka.version>
         <strimzi-oauth.version>0.6.1</strimzi-oauth.version>
+        <fasterxml.version>2.11.3</fasterxml.version>
+        <netty.version>4.1.49.Final</netty.version>
 
         <!-- Plugin Versions -->
         <maven.compiler.version>3.8.1</maven.compiler.version>
@@ -81,6 +84,21 @@
                 <groupId>io.strimzi</groupId>
                 <artifactId>kafka-oauth-client</artifactId>
                 <version>${strimzi-oauth.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${fasterxml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${fasterxml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-codec-http</artifactId>
+                <version>${netty.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

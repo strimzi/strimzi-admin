@@ -23,7 +23,9 @@ RUN mkdir -p ${STRIMZI_HOME}
 WORKDIR ${STRIMZI_HOME}
 
 COPY graphql/target/graphql-${strimzi_admin_version}-fat.jar ./
+COPY common-data-fetchers/target/common-data-fetchers-${strimzi_admin_version}-fat.jar ./
 COPY health/target/health-${strimzi_admin_version}-fat.jar ./
+COPY rest/target/rest-${strimzi_admin_version}-fat.jar ./
 COPY http-server/target/http-server-${strimzi_admin_version}-fat.jar ./
 COPY kafka-admin/target/kafka-admin-${strimzi_admin_version}-fat.jar ./
 COPY docker/run.sh ./

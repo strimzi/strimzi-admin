@@ -88,8 +88,12 @@ public class TopicOperations {
             } else {
                 Promise<Types.Topic> describeTopicConfigAndDescPromise = getTopicDescAndConf(acw.result(), topicToDescribe);
                 describeTopicConfigAndDescPromise.future()
-                        .onComplete(updated -> {
-                            prom.complete(updated.result());
+                        .onComplete(description -> {
+                            if (description.failed()) {
+                                prom.fail(description.cause());
+                            } else {
+                                prom.complete(description.result());
+                            }
                             acw.result().close();
                         });
             }

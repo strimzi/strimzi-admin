@@ -4,7 +4,6 @@
  */
 package io.strimzi.admin.kafka.admin.handlers;
 
-import graphql.schema.DataFetchingEnvironment;
 import io.strimzi.admin.common.data.fetchers.AdminClientWrapper;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -18,8 +17,7 @@ import java.util.Map;
 public class CommonHandler {
     protected static final Logger log = LogManager.getLogger(CommonHandler.class);
 
-    protected static void setOAuthToken(Map acConfig, DataFetchingEnvironment env) {
-        RoutingContext rc = env.getContext();
+    protected static void setOAuthToken(Map acConfig, RoutingContext rc) {
         String token = rc.request().getHeader("Authorization");
         if (token != null) {
             if (token.startsWith("Bearer ")) {

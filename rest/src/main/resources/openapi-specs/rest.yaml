@@ -1,0 +1,108 @@
+openapi: 3.0.0
+info:
+  title: Strimzi Kubernetes REST API
+  version: 0.1.0
+  description: An API to provide k8s REST endpoints for query
+paths:
+  /topic:
+    get:
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topic'
+          description: Get topic description
+      operationId: topic
+      summary: Get topic description
+      description: Get topic description.
+    parameters:
+      -
+        name: name
+        description: Topic to describe
+        schema:
+          type: string
+        in: query
+        required: true
+  /topicList:
+    get:
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Topic'
+          description: List of Kafka topics
+      operationId: topicList
+      summary: Get list of topics
+      description: Get list of topics
+  /deleteTopics:
+    delete:
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+          description: Topics deleted
+      operationId: deleteTopics
+      summary: Deletes a comma separated list of topics
+      description: Deletes a comma separated list of topics
+    parameters:
+      -
+        name: names
+        description: Comma separated list of topics to delete
+        schema:
+          type: string
+        in: query
+        required: true
+  /createTopic:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Topic'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topic'
+          description: Topic created
+      operationId: createTopic
+      summary: Create a topic
+      description: Create a topic
+  /updateTopic:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Topic'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topic'
+          description: Topic updated
+      operationId: updateTopic
+      summary: Updates topic configuration
+      description: Updates topic configuration
+components:
+  schemas:
+    response:
+      type: object
+      properties:
+        status:
+          type: string
+    Topic:
+      description: ''
+      type: object
