@@ -15,7 +15,6 @@
         <module>health</module>
         <module>kafka-admin</module>
         <module>graphql</module>
-        <module>common-data-fetchers</module>
         <module>rest</module>
     </modules>
 

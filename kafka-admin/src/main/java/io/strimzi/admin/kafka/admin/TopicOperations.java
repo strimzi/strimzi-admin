@@ -2,9 +2,9 @@
  * Copyright Strimzi authors.
  * License: Apache License 2.0 (see the file LICENSE or http://apache.org/licenses/LICENSE-2.0.html).
  */
-package io.strimzi.admin.common.data.fetchers;
+package io.strimzi.admin.kafka.admin;
 
-import io.strimzi.admin.common.data.fetchers.model.Types;
+import io.strimzi.admin.kafka.admin.model.Types;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.kafka.admin.Config;

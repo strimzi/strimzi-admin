@@ -4,12 +4,8 @@
  */
 package io.strimzi.admin.kafka.admin.handlers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.strimzi.admin.common.data.fetchers.AdminClientWrapper;
-import io.strimzi.admin.common.data.fetchers.TopicOperations;
+import io.strimzi.admin.kafka.admin.AdminClientWrapper;
+import io.strimzi.admin.kafka.admin.TopicOperations;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
@@ -41,30 +37,10 @@ public class TopicsDeleteHandler extends CommonHandler {
         return routingContext -> {
             setOAuthToken(acConfig, routingContext);
             Future<AdminClientWrapper> acw = createAdminClient(vertx, acConfig);
-
-
             List<String> topicsToDelete = Arrays.asList(routingContext.queryParams().get("names").split(",").clone());
-
             Promise<List<String>> prom = Promise.promise();
             TopicOperations.deleteTopics(acw, topicsToDelete, prom);
-
-            prom.future().onComplete(res -> {
-                if (res.failed()) {
-                    routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
-                    routingContext.response().end(res.cause().getMessage());
-                } else {
-                    ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-                    String json = null;
-                    try {
-                        json = ow.writeValueAsString(res.result());
-                    } catch (JsonProcessingException e) {
-                        routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
-                        routingContext.response().end(e.getMessage());
-                    }
-                    routingContext.response().setStatusCode(HttpResponseStatus.OK.code());
-                    routingContext.response().end(json);
-                }
-            });
+            processResponse(prom, routingContext);
         };
     }
 }

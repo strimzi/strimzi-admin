@@ -4,8 +4,13 @@
  */
 package io.strimzi.admin.kafka.admin.handlers;
 
-import io.strimzi.admin.common.data.fetchers.AdminClientWrapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.strimzi.admin.kafka.admin.AdminClientWrapper;
 import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.kafka.common.config.SaslConfigs;
@@ -39,5 +44,25 @@ public class CommonHandler {
             }
             return Future.failedFuture(e);
         }
+    }
+
+    protected static <T> void processResponse(Promise<T> prom, RoutingContext routingContext) {
+        prom.future().onComplete(res -> {
+            if (res.failed()) {
+                routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
+                routingContext.response().end(res.cause().getMessage());
+            } else {
+                ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+                String json = null;
+                try {
+                    json = ow.writeValueAsString(res.result());
+                } catch (JsonProcessingException e) {
+                    routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
+                    routingContext.response().end(e.getMessage());
+                }
+                routingContext.response().setStatusCode(HttpResponseStatus.OK.code());
+                routingContext.response().end(json);
+            }
+        });
     }
 }
