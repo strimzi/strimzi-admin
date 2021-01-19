@@ -4,10 +4,8 @@
  */
 package io.strimzi.admin.kafka.admin.handlers;
 
-import io.strimzi.admin.kafka.admin.AdminClientWrapper;
 import io.strimzi.admin.kafka.admin.TopicOperations;
 import io.strimzi.admin.kafka.admin.model.Types;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -25,7 +23,6 @@ public class TopicListHandler extends CommonHandler {
     public static VertxDataFetcher topicListFetcher(Map<String, Object> acConfig, Vertx vertx) {
         VertxDataFetcher<Types.TopicList> dataFetcher = new VertxDataFetcher<>((env, prom) -> {
             setOAuthToken(acConfig, env.getContext());
-            Future<AdminClientWrapper> acw = createAdminClient(vertx, acConfig);
 
             String argument = env.getArgument("search");
             final Pattern pattern;
@@ -35,7 +32,13 @@ public class TopicListHandler extends CommonHandler {
                 pattern = null;
             }
 
-            TopicOperations.getList(acw, prom, pattern);
+            createAdminClient(vertx, acConfig).onComplete(ac -> {
+                if (ac.failed()) {
+                    prom.fail(ac.cause());
+                } else {
+                    TopicOperations.getList(ac.result(), prom, pattern);
+                }
+            });
         });
         return dataFetcher;
     }
@@ -43,7 +46,6 @@ public class TopicListHandler extends CommonHandler {
     public static Handler<RoutingContext> topicListHandle(Map<String, Object> acConfig, Vertx vertx) {
         return routingContext -> {
             setOAuthToken(acConfig, routingContext);
-            Future<AdminClientWrapper> acw = createAdminClient(vertx, acConfig);
             String argument = routingContext.queryParams().get("search");
             final Pattern pattern;
             Promise<Types.TopicList> prom = Promise.promise();
@@ -53,8 +55,14 @@ public class TopicListHandler extends CommonHandler {
                 pattern = null;
             }
 
-            TopicOperations.getList(acw, prom, pattern);
-            processResponse(prom, routingContext);
+            createAdminClient(vertx, acConfig).onComplete(ac -> {
+                if (ac.failed()) {
+                    prom.fail(ac.cause());
+                } else {
+                    TopicOperations.getList(ac.result(), prom, pattern);
+                    processResponse(prom, routingContext);
+                }
+            });
         };
     }
 }

@@ -6,10 +6,8 @@ package io.strimzi.admin.kafka.admin.handlers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.strimzi.admin.kafka.admin.AdminClientWrapper;
 import io.strimzi.admin.kafka.admin.TopicOperations;
 import io.strimzi.admin.kafka.admin.model.Types;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -29,27 +27,32 @@ public class TopicCreateHandler extends CommonHandler {
     public static VertxDataFetcher createTopicFetcher(Map<String, Object> acConfig, Vertx vertx) {
         VertxDataFetcher<Types.Topic> dataFetcher = new VertxDataFetcher<>((environment, prom) -> {
             setOAuthToken(acConfig, environment.getContext());
-            Future<AdminClientWrapper> acw = createAdminClient(vertx, acConfig);
+            createAdminClient(vertx, acConfig).onComplete(ac -> {
+                if (ac.failed()) {
+                    prom.fail(ac.cause());
+                } else {
 
-            Types.NewTopic inputTopic = new Types.NewTopic();
+                    Types.NewTopic inputTopic = new Types.NewTopic();
 
-            Map<String, Object> input = environment.getArgument("input");
-            List<Map<String, Object>> inputConfig = (List<Map<String, Object>>) input.get("config");
-            List<Types.NewTopicConfigEntry> newTopicConfigEntries = new ArrayList<>();
+                    Map<String, Object> input = environment.getArgument("input");
+                    List<Map<String, Object>> inputConfig = (List<Map<String, Object>>) input.get("config");
+                    List<Types.NewTopicConfigEntry> newTopicConfigEntries = new ArrayList<>();
 
-            inputConfig.forEach(entry -> {
-                Types.NewTopicConfigEntry newTopicConfigEntry = new Types.NewTopicConfigEntry();
-                newTopicConfigEntry.setKey(entry.get("key").toString());
-                newTopicConfigEntry.setValue(entry.get("value").toString());
-                newTopicConfigEntries.add(newTopicConfigEntry);
+                    inputConfig.forEach(entry -> {
+                        Types.NewTopicConfigEntry newTopicConfigEntry = new Types.NewTopicConfigEntry();
+                        newTopicConfigEntry.setKey(entry.get("key").toString());
+                        newTopicConfigEntry.setValue(entry.get("value").toString());
+                        newTopicConfigEntries.add(newTopicConfigEntry);
+                    });
+
+                    inputTopic.setConfig(newTopicConfigEntries);
+                    inputTopic.setName(input.get("name").toString());
+                    inputTopic.setNumPartitions(Integer.parseInt(input.get("numPartitions").toString()));
+                    inputTopic.setReplicationFactor(Integer.parseInt(input.get("replicationFactor").toString()));
+
+                    TopicOperations.createTopic(ac.result(), prom, inputTopic);
+                }
             });
-
-            inputTopic.setConfig(newTopicConfigEntries);
-            inputTopic.setName(input.get("name").toString());
-            inputTopic.setNumPartitions(Integer.parseInt(input.get("numPartitions").toString()));
-            inputTopic.setReplicationFactor(Integer.parseInt(input.get("replicationFactor").toString()));
-
-            TopicOperations.createTopic(acw, prom, inputTopic);
         });
         return dataFetcher;
     }
@@ -57,20 +60,25 @@ public class TopicCreateHandler extends CommonHandler {
     public static Handler<RoutingContext> createTopicHandler(Map<String, Object> acConfig, Vertx vertx) {
         return routingContext -> {
             setOAuthToken(acConfig, routingContext);
-            Future<AdminClientWrapper> acw = createAdminClient(vertx, acConfig);
-            Types.NewTopic inputTopic = new Types.NewTopic();
-            Promise<Types.NewTopic> prom = Promise.promise();
-            ObjectMapper mapper = new ObjectMapper();
-            try {
-                inputTopic = mapper.readValue(routingContext.getBody().getBytes(), Types.NewTopic.class);
-            } catch (IOException e) {
-                routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
-                routingContext.response().end(e.getMessage());
-                prom.fail(e);
-            }
+            createAdminClient(vertx, acConfig).onComplete(ac -> {
+                Types.NewTopic inputTopic = new Types.NewTopic();
+                Promise<Types.NewTopic> prom = Promise.promise();
+                ObjectMapper mapper = new ObjectMapper();
+                try {
+                    inputTopic = mapper.readValue(routingContext.getBody().getBytes(), Types.NewTopic.class);
+                } catch (IOException e) {
+                    routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
+                    routingContext.response().end(e.getMessage());
+                    prom.fail(e);
+                }
 
-            TopicOperations.createTopic(acw, prom, inputTopic);
-            processResponse(prom, routingContext);
+                if (ac.failed()) {
+                    prom.fail(ac.cause());
+                } else {
+                    TopicOperations.createTopic(ac.result(), prom, inputTopic);
+                    processResponse(prom, routingContext);
+                }
+            });
         };
     }
 }

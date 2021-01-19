@@ -4,10 +4,8 @@
  */
 package io.strimzi.admin.kafka.admin.handlers;
 
-import io.strimzi.admin.kafka.admin.AdminClientWrapper;
 import io.strimzi.admin.kafka.admin.TopicOperations;
 import io.strimzi.admin.kafka.admin.model.Types;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -24,14 +22,19 @@ public class TopicDescriptionHandler extends CommonHandler {
     public static VertxDataFetcher topicDescriptionFetcher(Map<String, Object> acConfig, Vertx vertx) {
         VertxDataFetcher<Types.Topic> dataFetcher = new VertxDataFetcher<>((environment, prom) -> {
             setOAuthToken(acConfig, environment.getContext());
-            Future<AdminClientWrapper> acw = createAdminClient(vertx, acConfig);
 
             String topicToDescribe = environment.getArgument("name");
             if (topicToDescribe == null || topicToDescribe.isEmpty()) {
                 prom.fail("Topic to describe has not been specified");
             }
 
-            TopicOperations.describeTopic(acw, prom, topicToDescribe);
+            createAdminClient(vertx, acConfig).onComplete(ac -> {
+                if (ac.failed()) {
+                    prom.fail(ac.cause());
+                } else {
+                    TopicOperations.describeTopic(ac.result(), prom, topicToDescribe);
+                }
+            });
         });
         return dataFetcher;
     }
@@ -39,14 +42,19 @@ public class TopicDescriptionHandler extends CommonHandler {
     public static Handler<RoutingContext> topicDescriptionHandle(Map<String, Object> acConfig, Vertx vertx) {
         return routingContext -> {
             setOAuthToken(acConfig, routingContext);
-            Future<AdminClientWrapper> acw = createAdminClient(vertx, acConfig);
             String topicToDescribe = routingContext.queryParams().get("name");
             Promise<Types.Topic> prom = Promise.promise();
             if (topicToDescribe == null || topicToDescribe.isEmpty()) {
                 prom.fail("Topic to describe has not been specified");
             }
-            TopicOperations.describeTopic(acw, prom, topicToDescribe);
-            processResponse(prom, routingContext);
+            createAdminClient(vertx, acConfig).onComplete(ac -> {
+                if (ac.failed()) {
+                    prom.fail(ac.cause());
+                } else {
+                    TopicOperations.describeTopic(ac.result(), prom, topicToDescribe);
+                    processResponse(prom, routingContext);
+                }
+            });
         };
     }
 }

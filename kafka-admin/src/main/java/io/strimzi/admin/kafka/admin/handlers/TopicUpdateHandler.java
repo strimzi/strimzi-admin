@@ -6,10 +6,8 @@ package io.strimzi.admin.kafka.admin.handlers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.strimzi.admin.kafka.admin.AdminClientWrapper;
 import io.strimzi.admin.kafka.admin.TopicOperations;
 import io.strimzi.admin.kafka.admin.model.Types;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -29,7 +27,6 @@ public class TopicUpdateHandler extends CommonHandler {
     public static VertxDataFetcher updateTopicFetcher(Map<String, Object> acConfig, Vertx vertx) {
         VertxDataFetcher<Types.Topic> dataFetcher = new VertxDataFetcher<>((environment, prom) -> {
             setOAuthToken(acConfig, environment.getContext());
-            Future<AdminClientWrapper> acw = createAdminClient(vertx, acConfig);
 
             Types.UpdatedTopic updatedTopic = new Types.UpdatedTopic();
 
@@ -47,7 +44,13 @@ public class TopicUpdateHandler extends CommonHandler {
             updatedTopic.setConfig(newTopicConfigEntries);
             updatedTopic.setName(input.get("name").toString());
 
-            TopicOperations.updateTopic(acw, updatedTopic, prom);
+            createAdminClient(vertx, acConfig).onComplete(ac -> {
+                if (ac.failed()) {
+                    prom.fail(ac.cause());
+                } else {
+                    TopicOperations.updateTopic(ac.result(), updatedTopic, prom);
+                }
+            });
         });
         return dataFetcher;
     }
@@ -55,20 +58,26 @@ public class TopicUpdateHandler extends CommonHandler {
     public static Handler<RoutingContext> updateTopicHandler(Map<String, Object> acConfig, Vertx vertx) {
         return routingContext -> {
             setOAuthToken(acConfig, routingContext);
-            Future<AdminClientWrapper> acw = createAdminClient(vertx, acConfig);
-            Types.UpdatedTopic updatedTopic = new Types.UpdatedTopic();
             Promise<Types.UpdatedTopic> prom = Promise.promise();
-            ObjectMapper mapper = new ObjectMapper();
-            try {
-                updatedTopic = mapper.readValue(routingContext.getBody().getBytes(), Types.UpdatedTopic.class);
-            } catch (IOException e) {
-                routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
-                routingContext.response().end(e.getMessage());
-                prom.fail(e);
-            }
 
-            TopicOperations.updateTopic(acw, updatedTopic, prom);
-            processResponse(prom, routingContext);
+            createAdminClient(vertx, acConfig).onComplete(ac -> {
+                if (ac.failed()) {
+                    prom.fail(ac.cause());
+                } else {
+                    Types.UpdatedTopic updatedTopic = new Types.UpdatedTopic();
+                    ObjectMapper mapper = new ObjectMapper();
+                    try {
+                        updatedTopic = mapper.readValue(routingContext.getBody().getBytes(), Types.UpdatedTopic.class);
+                    } catch (IOException e) {
+                        routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
+                        routingContext.response().end(e.getMessage());
+                        prom.fail(e);
+                    }
+
+                    TopicOperations.updateTopic(ac.result(), updatedTopic, prom);
+                    processResponse(prom, routingContext);
+                }
+            });
         };
     }
 }

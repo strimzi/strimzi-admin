@@ -9,6 +9,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.kafka.admin.Config;
 import io.vertx.kafka.admin.ConfigEntry;
+import io.vertx.kafka.admin.KafkaAdminClient;
 import io.vertx.kafka.admin.NewTopic;
 import io.vertx.kafka.admin.TopicDescription;
 import io.vertx.kafka.client.common.ConfigResource;
@@ -31,7 +32,7 @@ public class TopicOperations {
     protected static final Logger log = LogManager.getLogger(TopicOperations.class);
 
 
-    public static void createTopic(Future<AdminClientWrapper> acwFut, Promise prom, Types.NewTopic inputTopic) {
+    public static void createTopic(KafkaAdminClient ac, Promise prom, Types.NewTopic inputTopic) {
         NewTopic newKafkaTopic = new NewTopic();
 
         Map<String, String> config = new HashMap<>();
@@ -48,64 +49,45 @@ public class TopicOperations {
         }
 
         Promise createTopicPromise = Promise.promise();
-        acwFut.onComplete(acw -> {
-            if (acw.failed()) {
-                prom.complete(acw.cause());
-            } else {
-                acw.result().createTopic(Collections.singletonList(newKafkaTopic), res -> {
-                    if (res.failed()) {
-                        prom.fail(res.cause());
-                        acw.result().close();
-                    } else {
-                        createTopicPromise.complete(res);
-                    }
+        ac.createTopics(Collections.singletonList(newKafkaTopic), res -> {
+            createTopicPromise.future().onComplete(ignore -> {
+                Types.Topic topic = new Types.Topic();
+                List<Types.ConfigEntry> newConf = new ArrayList<>();
+                inputTopic.getConfig().forEach(in -> {
+                    Types.ConfigEntry configEntry = new Types.ConfigEntry();
+                    configEntry.setKey(in.getKey());
+                    configEntry.setValue(in.getValue());
+                    newConf.add(configEntry);
                 });
 
-                createTopicPromise.future().onComplete(ignore -> {
-                    Types.Topic topic = new Types.Topic();
-                    List<Types.ConfigEntry> newConf = new ArrayList<>();
-                    inputTopic.getConfig().forEach(in -> {
-                        Types.ConfigEntry configEntry = new Types.ConfigEntry();
-                        configEntry.setKey(in.getKey());
-                        configEntry.setValue(in.getValue());
-                        newConf.add(configEntry);
-                    });
-
-                    topic.setConfig(newConf);
-                    topic.setName(inputTopic.getName());
-                    prom.complete(topic);
-                    acw.result().close();
-                });
-            }
+                topic.setConfig(newConf);
+                topic.setName(inputTopic.getName());
+                prom.complete(topic);
+                ac.close();
+            });
         });
 
     }
 
-    public static void describeTopic(Future<AdminClientWrapper> acwFut, Promise prom, String topicToDescribe) {
-        acwFut.onComplete(acw -> {
-            if (acw.failed()) {
-                prom.complete(acw.cause());
-            } else {
-                Promise<Types.Topic> describeTopicConfigAndDescPromise = getTopicDescAndConf(acw.result(), topicToDescribe);
-                describeTopicConfigAndDescPromise.future()
-                        .onComplete(description -> {
-                            if (description.failed()) {
-                                prom.fail(description.cause());
-                            } else {
-                                prom.complete(description.result());
-                            }
-                            acw.result().close();
-                        });
-            }
-        });
+    public static void describeTopic(KafkaAdminClient ac, Promise prom, String topicToDescribe) {
+        Promise<Types.Topic> describeTopicConfigAndDescPromise = getTopicDescAndConf(ac, topicToDescribe);
+        describeTopicConfigAndDescPromise.future()
+            .onComplete(description -> {
+                if (description.failed()) {
+                    prom.fail(description.cause());
+                } else {
+                    prom.complete(description.result());
+                }
+                ac.close();
+            });
     }
 
-    private static Promise<Types.Topic> getTopicDescAndConf(AdminClientWrapper acw, String topicToDescribe) {
+    private static Promise<Types.Topic> getTopicDescAndConf(KafkaAdminClient ac, String topicToDescribe) {
         Promise result = Promise.promise();
         Promise<Map<String, io.vertx.kafka.admin.TopicDescription>> describeTopicsPromise = Promise.promise();
         Promise<Map<ConfigResource, Config>> describeTopicConfigPromise = Promise.promise();
 
-        acw.describeTopics(Collections.singletonList(topicToDescribe), describeTopicsPromise);
+        ac.describeTopics(Collections.singletonList(topicToDescribe), describeTopicsPromise);
 
         describeTopicsPromise.future().onFailure(
             fail -> {
@@ -118,7 +100,7 @@ public class TopicOperations {
             }).onComplete(topic -> {
                 Types.Topic t = topic.result();
                 ConfigResource resource = new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, topicToDescribe);
-                acw.describeConfigs(Collections.singletonList(resource), describeTopicConfigPromise);
+                ac.describeConfigs(Collections.singletonList(resource), describeTopicConfigPromise);
                 describeTopicConfigPromise.future().onComplete(topics -> {
                     Config cfg = topics.result().get(resource);
                     t.setConfig(getTopicConf(cfg));
@@ -128,129 +110,108 @@ public class TopicOperations {
         return result;
     }
 
-    public static void getList(Future<AdminClientWrapper> acwFut, Promise prom, Pattern pattern) {
-        acwFut.onComplete(acw -> {
-            if (acw.failed()) {
-                prom.complete(acw.cause());
-            } else {
+    public static void getList(KafkaAdminClient ac, Promise prom, Pattern pattern) {
+        Promise<Set<String>> describeTopicsNamesPromise = Promise.promise();
+        Promise<Map<String, io.vertx.kafka.admin.TopicDescription>> describeTopicsPromise = Promise.promise();
+        Promise<Map<ConfigResource, Config>> describeTopicConfigPromise = Promise.promise();
 
+        List<Types.Topic> partialTopicDescriptions = new ArrayList();
 
-                Promise<Set<String>> describeTopicsNamesPromise = Promise.promise();
-                Promise<Map<String, io.vertx.kafka.admin.TopicDescription>> describeTopicsPromise = Promise.promise();
-                Promise<Map<ConfigResource, Config>> describeTopicConfigPromise = Promise.promise();
+        ac.listTopics(describeTopicsNamesPromise);
+        describeTopicsNamesPromise.future().onFailure(
+            fail -> {
+                log.error(fail);
+                prom.fail(fail);
+                ac.close();
+                return;
+            })
+                .compose(topics -> {
+                    List<String> filteredList = topics.stream().filter(topicName -> byTopicName(pattern, prom).test(topicName)).collect(Collectors.toList());
+                    if (prom.future().failed()) {
+                        ac.close();
+                        return Future.failedFuture(prom.future().cause());
+                    }
+                    ac.describeTopics(filteredList, result -> {
+                        if (result.failed()) {
+                            describeTopicsPromise.fail(result.cause());
+                            prom.fail(result.cause());
+                        }
+                        describeTopicsPromise.complete(result.result());
 
-                List<Types.Topic> partialTopicDescriptions = new ArrayList();
+                    });
+                    return describeTopicsPromise.future();
+                }).<List<Types.Topic>>compose(topics -> {
+                    topics.entrySet().forEach(topicDesc -> {
+                        partialTopicDescriptions.add(getTopicDesc(topicDesc.getValue()));
+                    });
+                    return Future.succeededFuture(partialTopicDescriptions);
+                }).onComplete(descriptions -> {
+                    List<ConfigResource> configResourceList = new ArrayList<>();
+                    descriptions.result().stream().forEach(topicWithDescription -> {
+                        Types.Topic t = topicWithDescription;
+                        ConfigResource resource = new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, t.getName());
+                        configResourceList.add(resource);
+                    });
 
-                acw.result().listTopics(describeTopicsNamesPromise);
-                describeTopicsNamesPromise.future().onFailure(
-                    fail -> {
-                        log.error(fail);
-                        prom.fail(fail);
-                        acw.result().close();
-                        return;
-                    })
-                        .compose(topics -> {
-                            List<String> filteredList = topics.stream().filter(topicName -> byTopicName(pattern, prom).test(topicName)).collect(Collectors.toList());
-                            if (prom.future().failed()) {
-                                acw.result().close();
-                                return Future.failedFuture(prom.future().cause());
-                            }
-                            acw.result().describeTopics(filteredList, result -> {
-                                if (result.failed()) {
-                                    describeTopicsPromise.fail(result.cause());
-                                    prom.fail(result.cause());
-                                }
-                                describeTopicsPromise.complete(result.result());
-
-                            });
-                            return describeTopicsPromise.future();
-                        }).<List<Types.Topic>>compose(topics -> {
-                            topics.entrySet().forEach(topicDesc -> {
-                                partialTopicDescriptions.add(getTopicDesc(topicDesc.getValue()));
-                            });
-                            return Future.succeededFuture(partialTopicDescriptions);
-                        }).onComplete(descriptions -> {
-                            List<ConfigResource> configResourceList = new ArrayList<>();
-                            descriptions.result().stream().forEach(topicWithDescription -> {
-                                Types.Topic t = topicWithDescription;
-                                ConfigResource resource = new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, t.getName());
-                                configResourceList.add(resource);
-                            });
-
-                            // cannot use getTopicDescAndConf because we need to get list
-                            acw.result().describeConfigs(configResourceList, describeTopicConfigPromise);
-                            describeTopicConfigPromise.future().onComplete(topicsConfigurations -> {
-                                List<Types.Topic> fullTopicDescriptions = new ArrayList<>();
-                                descriptions.result().forEach(topicWithDescription -> {
-                                    ConfigResource resource = new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, topicWithDescription.getName());
-                                    Config cfg = topicsConfigurations.result().get(resource);
-                                    topicWithDescription.setConfig(getTopicConf(cfg));
-                                    fullTopicDescriptions.add(topicWithDescription);
-                                });
-                                Types.TopicList topicList = new Types.TopicList();
-                                topicList.setItems(fullTopicDescriptions);
-                                topicList.setCount(fullTopicDescriptions.size());
-                                prom.complete(topicList);
-                                acw.result().close();
-                            });
+                    // cannot use getTopicDescAndConf because we need to get list
+                    ac.describeConfigs(configResourceList, describeTopicConfigPromise);
+                    describeTopicConfigPromise.future().onComplete(topicsConfigurations -> {
+                        List<Types.Topic> fullTopicDescriptions = new ArrayList<>();
+                        descriptions.result().forEach(topicWithDescription -> {
+                            ConfigResource resource = new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, topicWithDescription.getName());
+                            Config cfg = topicsConfigurations.result().get(resource);
+                            topicWithDescription.setConfig(getTopicConf(cfg));
+                            fullTopicDescriptions.add(topicWithDescription);
                         });
+                        Types.TopicList topicList = new Types.TopicList();
+                        topicList.setItems(fullTopicDescriptions);
+                        topicList.setCount(fullTopicDescriptions.size());
+                        prom.complete(topicList);
+                        ac.close();
+                    });
+                });
+
+    }
+
+    public static void deleteTopics(KafkaAdminClient ac, List<String> topicsToDelete, Promise prom) {
+        ac.deleteTopics(topicsToDelete, res -> {
+            if (res.failed()) {
+                log.error(res.cause());
+                prom.fail(res.cause());
+                ac.close();
+            } else {
+                prom.complete(topicsToDelete);
+                ac.close();
             }
         });
     }
 
-    public static void deleteTopics(Future<AdminClientWrapper> acwFut, List<String> topicsToDelete, Promise prom) {
-        acwFut.onComplete(acw -> {
-            if (acw.failed()) {
-                prom.complete(acw.cause());
-            } else {
-                acw.result().deleteTopics(topicsToDelete, res -> {
-                    if (res.failed()) {
-                        log.error(res.cause());
-                        prom.fail(res.cause());
-                        acw.result().close();
-                    } else {
-                        prom.complete(topicsToDelete);
-                        acw.result().close();
-                    }
-                });
-            }
+    public static void updateTopic(KafkaAdminClient ac, Types.UpdatedTopic topicToUpdate, Promise prom) {
+        List<ConfigEntry> ceList = new ArrayList<>();
+        topicToUpdate.getConfig().stream().forEach(cfgEntry -> {
+            ConfigEntry ce = new ConfigEntry(cfgEntry.getKey(), cfgEntry.getValue());
+            ceList.add(ce);
         });
-    }
+        Config cfg = new Config(ceList);
 
-    public static void updateTopic(Future<AdminClientWrapper> acwFut, Types.UpdatedTopic topicToUpdate, Promise prom) {
-
-        acwFut.onComplete(acw -> {
-            if (acw.failed()) {
-                prom.complete(acw.cause());
-            } else {
-                List<ConfigEntry> ceList = new ArrayList<>();
-                topicToUpdate.getConfig().stream().forEach(cfgEntry -> {
-                    ConfigEntry ce = new ConfigEntry(cfgEntry.getKey(), cfgEntry.getValue());
-                    ceList.add(ce);
-                });
-                Config cfg = new Config(ceList);
-
-                ConfigResource resource = new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, topicToUpdate.getName());
-                Promise<Void> updateTopicPromise = Promise.promise();
-                acw.result().updateTopics(Collections.singletonMap(resource, cfg), result -> {
-                    if (result.failed()) {
-                        prom.fail(result.cause());
-                        acw.result().close();
-                    }
-                    updateTopicPromise.complete(result.result());
-                });
-
-                Promise<Types.Topic> describeTopicConfigAndDescPromise = getTopicDescAndConf(acw.result(), topicToUpdate.getName());
-
-                updateTopicPromise.future()
-                        .compose(i -> describeTopicConfigAndDescPromise.future())
-                        .onComplete(updated -> {
-                            prom.complete(updated.result());
-                            acw.result().close();
-                        });
+        ConfigResource resource = new ConfigResource(org.apache.kafka.common.config.ConfigResource.Type.TOPIC, topicToUpdate.getName());
+        Promise<Void> updateTopicPromise = Promise.promise();
+        ac.alterConfigs(Collections.singletonMap(resource, cfg), result -> {
+            if (result.failed()) {
+                prom.fail(result.cause());
+                ac.close();
             }
+            updateTopicPromise.complete(result.result());
         });
 
+        Promise<Types.Topic> describeTopicConfigAndDescPromise = getTopicDescAndConf(ac, topicToUpdate.getName());
+
+        updateTopicPromise.future()
+                .compose(i -> describeTopicConfigAndDescPromise.future())
+                .onComplete(updated -> {
+                    prom.complete(updated.result());
+                    ac.close();
+                });
     }
 
     private static Predicate<String> byTopicName(Pattern pattern, Promise prom) {

@@ -8,16 +8,17 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.strimzi.admin.kafka.admin.AdminClientWrapper;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.kafka.admin.KafkaAdminClient;
 import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.Map;
+import java.util.Properties;
 
 public class CommonHandler {
     protected static final Logger log = LogManager.getLogger(CommonHandler.class);
@@ -32,15 +33,18 @@ public class CommonHandler {
         }
     }
 
-    protected static Future<AdminClientWrapper> createAdminClient(Vertx vertx, Map acConfig) {
-        AdminClientWrapper acw = new AdminClientWrapper(vertx, acConfig);
+    protected static Future<KafkaAdminClient> createAdminClient(Vertx vertx, Map acConfig) {
+        Properties props = new Properties();
+        props.putAll(acConfig);
+
+        KafkaAdminClient adminClient = null;
         try {
-            acw.open();
-            return Future.succeededFuture(acw);
+            adminClient = KafkaAdminClient.create(vertx, props);
+            return Future.succeededFuture(adminClient);
         } catch (Exception e) {
-            log.error(e);
-            if (acw != null) {
-                acw.close();
+            log.error("Failed to create Kafka AdminClient", e.getCause());
+            if (adminClient != null) {
+                adminClient.close();
             }
             return Future.failedFuture(e);
         }

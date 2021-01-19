@@ -4,9 +4,7 @@
  */
 package io.strimzi.admin.kafka.admin.handlers;
 
-import io.strimzi.admin.kafka.admin.AdminClientWrapper;
 import io.strimzi.admin.kafka.admin.TopicOperations;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -25,10 +23,15 @@ public class TopicsDeleteHandler extends CommonHandler {
     public static VertxDataFetcher deleteTopicsFetcher(Map<String, Object> acConfig, Vertx vertx) {
         VertxDataFetcher<List<String>> dataFetcher = new VertxDataFetcher<>((environment, prom) -> {
             setOAuthToken(acConfig, environment.getContext());
-            Future<AdminClientWrapper> acw = createAdminClient(vertx, acConfig);
 
             List<String> topicsToDelete = environment.getArgument("names");
-            TopicOperations.deleteTopics(acw, topicsToDelete, prom);
+            createAdminClient(vertx, acConfig).onComplete(ac -> {
+                if (ac.failed()) {
+                    prom.fail(ac.cause());
+                } else {
+                    TopicOperations.deleteTopics(ac.result(), topicsToDelete, prom);
+                }
+            });
         });
         return dataFetcher;
     }
@@ -36,11 +39,16 @@ public class TopicsDeleteHandler extends CommonHandler {
     public static Handler<RoutingContext> deleteTopicsHandler(Map<String, Object> acConfig, Vertx vertx) {
         return routingContext -> {
             setOAuthToken(acConfig, routingContext);
-            Future<AdminClientWrapper> acw = createAdminClient(vertx, acConfig);
             List<String> topicsToDelete = Arrays.asList(routingContext.queryParams().get("names").split(",").clone());
             Promise<List<String>> prom = Promise.promise();
-            TopicOperations.deleteTopics(acw, topicsToDelete, prom);
-            processResponse(prom, routingContext);
+            createAdminClient(vertx, acConfig).onComplete(ac -> {
+                if (ac.failed()) {
+                    prom.fail(ac.cause());
+                } else {
+                    TopicOperations.deleteTopics(ac.result(), topicsToDelete, prom);
+                    processResponse(prom, routingContext);
+                }
+            });
         };
     }
 }
