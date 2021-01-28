@@ -15,6 +15,12 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.kafka.admin.KafkaAdminClient;
 import org.apache.kafka.common.config.SaslConfigs;
+import org.apache.kafka.common.errors.AuthenticationException;
+import org.apache.kafka.common.errors.AuthorizationException;
+import org.apache.kafka.common.errors.InvalidReplicationFactorException;
+import org.apache.kafka.common.errors.InvalidTopicException;
+import org.apache.kafka.common.errors.TimeoutException;
+import org.apache.kafka.common.errors.TopicExistsException;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -57,12 +63,18 @@ public class CommonHandler {
             if (res.failed()) {
                 if (res.cause() instanceof UnknownTopicOrPartitionException) {
                     routingContext.response().setStatusCode(HttpResponseStatus.NOT_FOUND.code());
-                } else if (res.cause() instanceof org.apache.kafka.common.errors.TimeoutException) {
+                } else if (res.cause() instanceof TimeoutException) {
                     routingContext.response().setStatusCode(HttpResponseStatus.REQUEST_TIMEOUT.code());
-                } else if (res.cause() instanceof org.apache.kafka.common.errors.AuthenticationException ||
-                    res.cause() instanceof org.apache.kafka.common.errors.AuthorizationException ||
+                } else if (res.cause() instanceof AuthenticationException ||
+                    res.cause() instanceof AuthorizationException ||
                     res.cause() instanceof TokenExpiredException) {
                     routingContext.response().setStatusCode(HttpResponseStatus.UNAUTHORIZED.code());
+                } else if (res.cause() instanceof InvalidTopicException) {
+                    routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code());
+                } else if (res.cause() instanceof InvalidReplicationFactorException) {
+                    routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code());
+                } else if (res.cause() instanceof TopicExistsException) {
+                    routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code());
                 } else {
                     routingContext.response().setStatusCode(responseStatus.code());
                 }
