@@ -48,10 +48,10 @@ public class RestService implements RouteRegistration {
     }
 
     private void assignRoutes(final OpenAPI3RouterFactory routerFactory, final Vertx vertx) {
-        routerFactory.addHandlerByOperationId("topic", TopicDescriptionHandler.topicDescriptionHandle(KafkaAdminService.getAcConfig(), vertx));
-        routerFactory.addHandlerByOperationId("topicList", TopicListHandler.topicListHandle(KafkaAdminService.getAcConfig(), vertx));
+        routerFactory.addHandlerByOperationId("getTopic", TopicDescriptionHandler.topicDescriptionHandle(KafkaAdminService.getAcConfig(), vertx));
+        routerFactory.addHandlerByOperationId("getTopicsList", TopicListHandler.topicListHandle(KafkaAdminService.getAcConfig(), vertx));
 
-        routerFactory.addHandlerByOperationId("deleteTopics", TopicsDeleteHandler.deleteTopicsHandler(KafkaAdminService.getAcConfig(), vertx));
+        routerFactory.addHandlerByOperationId("deleteTopic", TopicsDeleteHandler.deleteTopicHandler(KafkaAdminService.getAcConfig(), vertx));
         routerFactory.addHandlerByOperationId("createTopic", TopicCreateHandler.createTopicHandler(KafkaAdminService.getAcConfig(), vertx));
         routerFactory.addHandlerByOperationId("updateTopic", TopicUpdateHandler.updateTopicHandler(KafkaAdminService.getAcConfig(), vertx));
     }

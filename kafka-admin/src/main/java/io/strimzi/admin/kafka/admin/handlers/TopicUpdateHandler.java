@@ -59,6 +59,12 @@ public class TopicUpdateHandler extends CommonHandler {
         return routingContext -> {
             setOAuthToken(acConfig, routingContext);
             Promise<Types.UpdatedTopic> prom = Promise.promise();
+            String uri = routingContext.request().uri();
+            String topicToUpdate = uri.substring(uri.lastIndexOf("/") + 1);
+            if (topicToUpdate == null || topicToUpdate.isEmpty()) {
+                prom.fail("Topic to update has not been specified.");
+                processResponse(prom, routingContext, HttpResponseStatus.BAD_REQUEST);
+            }
 
             createAdminClient(vertx, acConfig).onComplete(ac -> {
                 if (ac.failed()) {
@@ -68,15 +74,15 @@ public class TopicUpdateHandler extends CommonHandler {
                     ObjectMapper mapper = new ObjectMapper();
                     try {
                         updatedTopic = mapper.readValue(routingContext.getBody().getBytes(), Types.UpdatedTopic.class);
+                        updatedTopic.setName(topicToUpdate);
                     } catch (IOException e) {
                         routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
                         routingContext.response().end(e.getMessage());
                         prom.fail(e);
                     }
-
                     TopicOperations.updateTopic(ac.result(), updatedTopic, prom);
-                    processResponse(prom, routingContext);
                 }
+                processResponse(prom, routingContext, HttpResponseStatus.OK);
             });
         };
     }

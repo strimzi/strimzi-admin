@@ -8,12 +8,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.strimzi.kafka.oauth.validator.TokenExpiredException;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.kafka.admin.KafkaAdminClient;
 import org.apache.kafka.common.config.SaslConfigs;
+import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -50,10 +52,20 @@ public class CommonHandler {
         }
     }
 
-    protected static <T> void processResponse(Promise<T> prom, RoutingContext routingContext) {
+    protected static <T> void processResponse(Promise<T> prom, RoutingContext routingContext, HttpResponseStatus responseStatus) {
         prom.future().onComplete(res -> {
             if (res.failed()) {
-                routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
+                if (res.cause() instanceof UnknownTopicOrPartitionException) {
+                    routingContext.response().setStatusCode(HttpResponseStatus.NOT_FOUND.code());
+                } else if (res.cause() instanceof org.apache.kafka.common.errors.TimeoutException) {
+                    routingContext.response().setStatusCode(HttpResponseStatus.REQUEST_TIMEOUT.code());
+                } else if (res.cause() instanceof org.apache.kafka.common.errors.AuthenticationException ||
+                    res.cause() instanceof org.apache.kafka.common.errors.AuthorizationException ||
+                    res.cause() instanceof TokenExpiredException) {
+                    routingContext.response().setStatusCode(HttpResponseStatus.UNAUTHORIZED.code());
+                } else {
+                    routingContext.response().setStatusCode(responseStatus.code());
+                }
                 routingContext.response().end(res.cause().getMessage());
             } else {
                 ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
@@ -64,7 +76,7 @@ public class CommonHandler {
                     routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
                     routingContext.response().end(e.getMessage());
                 }
-                routingContext.response().setStatusCode(HttpResponseStatus.OK.code());
+                routingContext.response().setStatusCode(responseStatus.code());
                 routingContext.response().end(json);
             }
         });

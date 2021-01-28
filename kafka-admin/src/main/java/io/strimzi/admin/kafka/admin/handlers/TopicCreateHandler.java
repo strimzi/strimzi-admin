@@ -76,8 +76,8 @@ public class TopicCreateHandler extends CommonHandler {
                     prom.fail(ac.cause());
                 } else {
                     TopicOperations.createTopic(ac.result(), prom, inputTopic);
-                    processResponse(prom, routingContext);
                 }
+                processResponse(prom, routingContext, HttpResponseStatus.CREATED);
             });
         };
     }

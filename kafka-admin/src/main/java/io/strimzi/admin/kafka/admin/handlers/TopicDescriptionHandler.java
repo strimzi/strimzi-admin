@@ -4,6 +4,7 @@
  */
 package io.strimzi.admin.kafka.admin.handlers;
 
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.strimzi.admin.kafka.admin.TopicOperations;
 import io.strimzi.admin.kafka.admin.model.Types;
 import io.vertx.core.Handler;
@@ -42,18 +43,20 @@ public class TopicDescriptionHandler extends CommonHandler {
     public static Handler<RoutingContext> topicDescriptionHandle(Map<String, Object> acConfig, Vertx vertx) {
         return routingContext -> {
             setOAuthToken(acConfig, routingContext);
-            String topicToDescribe = routingContext.queryParams().get("name");
+            String uri = routingContext.request().uri();
+            String topicToDescribe = uri.substring(uri.lastIndexOf("/") + 1);
             Promise<Types.Topic> prom = Promise.promise();
             if (topicToDescribe == null || topicToDescribe.isEmpty()) {
-                prom.fail("Topic to describe has not been specified");
+                prom.fail("Topic to describe has not been specified.");
+                processResponse(prom, routingContext, HttpResponseStatus.BAD_REQUEST);
             }
             createAdminClient(vertx, acConfig).onComplete(ac -> {
                 if (ac.failed()) {
                     prom.fail(ac.cause());
                 } else {
                     TopicOperations.describeTopic(ac.result(), prom, topicToDescribe);
-                    processResponse(prom, routingContext);
                 }
+                processResponse(prom, routingContext, HttpResponseStatus.OK);
             });
         };
     }

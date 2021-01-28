@@ -4,6 +4,7 @@
  */
 package io.strimzi.admin.kafka.admin.handlers;
 
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.strimzi.admin.kafka.admin.TopicOperations;
 import io.strimzi.admin.kafka.admin.model.Types;
 import io.vertx.core.Handler;
@@ -24,7 +25,7 @@ public class TopicListHandler extends CommonHandler {
         VertxDataFetcher<Types.TopicList> dataFetcher = new VertxDataFetcher<>((env, prom) -> {
             setOAuthToken(acConfig, env.getContext());
 
-            String argument = env.getArgument("search");
+            String argument = env.getArgument("filter");
             final Pattern pattern;
             if (argument != null && !argument.isEmpty()) {
                 pattern = Pattern.compile(argument);
@@ -46,7 +47,7 @@ public class TopicListHandler extends CommonHandler {
     public static Handler<RoutingContext> topicListHandle(Map<String, Object> acConfig, Vertx vertx) {
         return routingContext -> {
             setOAuthToken(acConfig, routingContext);
-            String argument = routingContext.queryParams().get("search");
+            String argument = routingContext.queryParams().get("filter");
             final Pattern pattern;
             Promise<Types.TopicList> prom = Promise.promise();
             if (argument != null && !argument.isEmpty()) {
@@ -60,8 +61,8 @@ public class TopicListHandler extends CommonHandler {
                     prom.fail(ac.cause());
                 } else {
                     TopicOperations.getList(ac.result(), prom, pattern);
-                    processResponse(prom, routingContext);
                 }
+                processResponse(prom, routingContext, HttpResponseStatus.OK);
             });
         };
     }
