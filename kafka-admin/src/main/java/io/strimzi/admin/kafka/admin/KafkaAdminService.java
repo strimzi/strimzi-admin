@@ -9,11 +9,7 @@ import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import io.strimzi.admin.graphql.registration.GraphQLRegistration;
 import io.strimzi.admin.graphql.registration.GraphQLRegistrationDescriptor;
-import io.strimzi.admin.kafka.admin.handlers.TopicCreateHandler;
-import io.strimzi.admin.kafka.admin.handlers.TopicUpdateHandler;
-import io.strimzi.admin.kafka.admin.handlers.TopicsDeleteHandler;
-import io.strimzi.admin.kafka.admin.handlers.TopicDescriptionHandler;
-import io.strimzi.admin.kafka.admin.handlers.TopicListHandler;
+import io.strimzi.admin.kafka.admin.handlers.GraphQLOperations;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -69,15 +65,16 @@ public class KafkaAdminService implements GraphQLRegistration {
         }, ar -> {
                 final TypeDefinitionRegistry schema = (TypeDefinitionRegistry) ar.result();
 
+                final GraphQLOperations gqlo = new GraphQLOperations();
                 final RuntimeWiring query = RuntimeWiring.newRuntimeWiring()
                     .type("Query", typeWiring -> typeWiring
-                        .dataFetcher("topic", TopicDescriptionHandler.topicDescriptionFetcher(config, vertx))
-                        .dataFetcher("topicList", TopicListHandler.topicListFetcher(config, vertx))
+                        .dataFetcher("topic", gqlo.describeTopic(config, vertx))
+                        .dataFetcher("topicList", gqlo.listTopics(config, vertx))
                     )
                     .type("Mutation", typeWiring -> typeWiring
-                            .dataFetcher("deleteTopics", TopicsDeleteHandler.deleteTopicsFetcher(config, vertx))
-                            .dataFetcher("createTopic", TopicCreateHandler.createTopicFetcher(config, vertx))
-                            .dataFetcher("updateTopic", TopicUpdateHandler.updateTopicFetcher(config, vertx))
+                            .dataFetcher("deleteTopics", gqlo.deleteTopic(config, vertx))
+                            .dataFetcher("createTopic", gqlo.createTopic(config, vertx))
+                            .dataFetcher("updateTopic", gqlo.updateTopic(config, vertx))
                     )
                     .build();
                 promise.complete(GraphQLRegistrationDescriptor.create(schema, query));

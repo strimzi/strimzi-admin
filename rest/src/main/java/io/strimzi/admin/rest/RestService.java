@@ -7,11 +7,7 @@ package io.strimzi.admin.rest;
 import io.strimzi.admin.http.server.registration.RouteRegistration;
 import io.strimzi.admin.http.server.registration.RouteRegistrationDescriptor;
 import io.strimzi.admin.kafka.admin.KafkaAdminService;
-import io.strimzi.admin.kafka.admin.handlers.TopicCreateHandler;
-import io.strimzi.admin.kafka.admin.handlers.TopicDescriptionHandler;
-import io.strimzi.admin.kafka.admin.handlers.TopicListHandler;
-import io.strimzi.admin.kafka.admin.handlers.TopicUpdateHandler;
-import io.strimzi.admin.kafka.admin.handlers.TopicsDeleteHandler;
+import io.strimzi.admin.kafka.admin.handlers.RestOperations;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -48,11 +44,12 @@ public class RestService implements RouteRegistration {
     }
 
     private void assignRoutes(final OpenAPI3RouterFactory routerFactory, final Vertx vertx) {
-        routerFactory.addHandlerByOperationId("getTopic", TopicDescriptionHandler.topicDescriptionHandle(KafkaAdminService.getAcConfig(), vertx));
-        routerFactory.addHandlerByOperationId("getTopicsList", TopicListHandler.topicListHandle(KafkaAdminService.getAcConfig(), vertx));
+        RestOperations ro = new RestOperations();
+        routerFactory.addHandlerByOperationId("getTopic", ro.describeTopic(KafkaAdminService.getAcConfig(), vertx));
+        routerFactory.addHandlerByOperationId("getTopicsList", ro.listTopics(KafkaAdminService.getAcConfig(), vertx));
 
-        routerFactory.addHandlerByOperationId("deleteTopic", TopicsDeleteHandler.deleteTopicHandler(KafkaAdminService.getAcConfig(), vertx));
-        routerFactory.addHandlerByOperationId("createTopic", TopicCreateHandler.createTopicHandler(KafkaAdminService.getAcConfig(), vertx));
-        routerFactory.addHandlerByOperationId("updateTopic", TopicUpdateHandler.updateTopicHandler(KafkaAdminService.getAcConfig(), vertx));
+        routerFactory.addHandlerByOperationId("deleteTopic", ro.deleteTopic(KafkaAdminService.getAcConfig(), vertx));
+        routerFactory.addHandlerByOperationId("createTopic", ro.createTopic(KafkaAdminService.getAcConfig(), vertx));
+        routerFactory.addHandlerByOperationId("updateTopic", ro.updateTopic(KafkaAdminService.getAcConfig(), vertx));
     }
 }
