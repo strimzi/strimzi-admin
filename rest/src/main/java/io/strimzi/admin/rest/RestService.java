@@ -6,7 +6,7 @@ package io.strimzi.admin.rest;
 
 import io.strimzi.admin.http.server.registration.RouteRegistration;
 import io.strimzi.admin.http.server.registration.RouteRegistrationDescriptor;
-import io.strimzi.admin.kafka.admin.KafkaAdminService;
+import io.strimzi.admin.kafka.admin.KafkaAdmin;
 import io.strimzi.admin.kafka.admin.handlers.RestOperations;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -22,7 +22,7 @@ import org.apache.logging.log4j.Logger;
 public class RestService implements RouteRegistration {
 
     protected final Logger log = LogManager.getLogger(RestService.class);
-    private static final String SUCCESS_RESPONSE = "{\"status\": \"OK\"}";
+    KafkaAdmin ka;
 
     @Override
     public Future<RouteRegistrationDescriptor> getRegistrationDescriptor(final Vertx vertx) {
@@ -31,6 +31,11 @@ public class RestService implements RouteRegistration {
 
         OpenAPI3RouterFactory.create(vertx, "openapi-specs/rest.yaml", ar -> {
             if (ar.succeeded()) {
+                try {
+                    ka = new KafkaAdmin();
+                } catch (Exception e) {
+                    promise.fail(e);
+                }
                 OpenAPI3RouterFactory routerFactory = ar.result();
                 assignRoutes(routerFactory, vertx);
                 promise.complete(RouteRegistrationDescriptor.create("/rest", routerFactory.getRouter()));
@@ -45,11 +50,11 @@ public class RestService implements RouteRegistration {
 
     private void assignRoutes(final OpenAPI3RouterFactory routerFactory, final Vertx vertx) {
         RestOperations ro = new RestOperations();
-        routerFactory.addHandlerByOperationId("getTopic", ro.describeTopic(KafkaAdminService.getAcConfig(), vertx));
-        routerFactory.addHandlerByOperationId("getTopicsList", ro.listTopics(KafkaAdminService.getAcConfig(), vertx));
+        routerFactory.addHandlerByOperationId("getTopic", ro.describeTopic(ka.getAcConfig(), vertx));
+        routerFactory.addHandlerByOperationId("getTopicsList", ro.listTopics(ka.getAcConfig(), vertx));
 
-        routerFactory.addHandlerByOperationId("deleteTopic", ro.deleteTopic(KafkaAdminService.getAcConfig(), vertx));
-        routerFactory.addHandlerByOperationId("createTopic", ro.createTopic(KafkaAdminService.getAcConfig(), vertx));
-        routerFactory.addHandlerByOperationId("updateTopic", ro.updateTopic(KafkaAdminService.getAcConfig(), vertx));
+        routerFactory.addHandlerByOperationId("deleteTopic", ro.deleteTopic(ka.getAcConfig(), vertx));
+        routerFactory.addHandlerByOperationId("createTopic", ro.createTopic(ka.getAcConfig(), vertx));
+        routerFactory.addHandlerByOperationId("updateTopic", ro.updateTopic(ka.getAcConfig(), vertx));
     }
 }

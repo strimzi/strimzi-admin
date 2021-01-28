@@ -22,7 +22,6 @@ ENV STRIMZI_HOME=/opt/strimzi
 RUN mkdir -p ${STRIMZI_HOME}
 WORKDIR ${STRIMZI_HOME}
 
-COPY graphql/target/graphql-${strimzi_admin_version}-fat.jar ./
 COPY health/target/health-${strimzi_admin_version}-fat.jar ./
 COPY rest/target/rest-${strimzi_admin_version}-fat.jar ./
 COPY http-server/target/http-server-${strimzi_admin_version}-fat.jar ./

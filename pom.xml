@@ -14,7 +14,6 @@
         <module>http-server</module>
         <module>health</module>
         <module>kafka-admin</module>
-        <module>graphql</module>
         <module>rest</module>
     </modules>
 
@@ -27,7 +26,6 @@
         <!-- Dependency Versions -->
         <vertx.version>3.9.4</vertx.version>
         <log4j.version>2.14.0</log4j.version>
-        <graphql-java.version>16.1</graphql-java.version>
         <kafka.version>2.6.0</kafka.version>
         <strimzi-oauth.version>0.6.1</strimzi-oauth.version>
         <fasterxml.version>2.11.3</fasterxml.version>
@@ -63,16 +61,6 @@
                 <groupId>io.strimzi</groupId>
                 <artifactId>http-server</artifactId>
                 <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.strimzi</groupId>
-                <artifactId>graphql</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.graphql-java</groupId>
-                <artifactId>graphql-java</artifactId>
-                <version>${graphql-java.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.kafka</groupId>
