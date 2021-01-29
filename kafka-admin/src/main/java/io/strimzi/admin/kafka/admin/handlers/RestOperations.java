@@ -12,6 +12,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.RoutingContext;
+import org.apache.kafka.common.errors.InvalidRequestException;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -129,11 +130,13 @@ public class RestOperations extends CommonHandler implements OperationsHandler<H
     public Handler<RoutingContext> listTopics(Map<String, Object> acConfig, Vertx vertx) {
         return routingContext -> {
             setOAuthToken(acConfig, routingContext);
-            String argument = routingContext.queryParams().get("filter");
+            String filter = routingContext.queryParams().get("filter");
+            String limit = routingContext.queryParams().get("limit") == null ? "0" : routingContext.queryParams().get("limit");
+            String offset = routingContext.queryParams().get("offset") == null ? "0" : routingContext.queryParams().get("offset");
             final Pattern pattern;
             Promise<Types.TopicList> prom = Promise.promise();
-            if (argument != null && !argument.isEmpty()) {
-                pattern = Pattern.compile(argument);
+            if (filter != null && !filter.isEmpty()) {
+                pattern = Pattern.compile(filter);
             } else {
                 pattern = null;
             }
@@ -142,7 +145,15 @@ public class RestOperations extends CommonHandler implements OperationsHandler<H
                 if (ac.failed()) {
                     prom.fail(ac.cause());
                 } else {
-                    TopicOperations.getList(ac.result(), prom, pattern);
+                    try {
+                        if (Integer.parseInt(offset) < 0 || Integer.parseInt(limit) < 0) {
+                            throw new InvalidRequestException("Offset and limit have to be positive integers.");
+                        }
+                        TopicOperations.getList(ac.result(), prom, pattern, Integer.parseInt(offset), Integer.parseInt(limit));
+                    } catch (NumberFormatException | InvalidRequestException e) {
+                        prom.fail(e);
+                        processResponse(prom, routingContext, HttpResponseStatus.BAD_REQUEST);
+                    }
                 }
                 processResponse(prom, routingContext, HttpResponseStatus.OK);
             });

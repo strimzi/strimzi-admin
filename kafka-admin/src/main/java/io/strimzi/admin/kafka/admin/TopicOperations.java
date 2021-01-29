@@ -4,6 +4,7 @@
  */
 package io.strimzi.admin.kafka.admin;
 
+import io.strimzi.admin.kafka.admin.handlers.CommonHandler;
 import io.strimzi.admin.kafka.admin.model.Types;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -13,6 +14,7 @@ import io.vertx.kafka.admin.KafkaAdminClient;
 import io.vertx.kafka.admin.NewTopic;
 import io.vertx.kafka.admin.TopicDescription;
 import io.vertx.kafka.client.common.ConfigResource;
+import org.apache.kafka.common.errors.InvalidRequestException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -112,7 +114,7 @@ public class TopicOperations {
         return result;
     }
 
-    public static void getList(KafkaAdminClient ac, Promise prom, Pattern pattern) {
+    public static void getList(KafkaAdminClient ac, Promise prom, Pattern pattern, int offset, final int limit) {
         Promise<Set<String>> describeTopicsNamesPromise = Promise.promise();
         Promise<Map<String, io.vertx.kafka.admin.TopicDescription>> describeTopicsPromise = Promise.promise();
         Promise<Map<ConfigResource, Config>> describeTopicConfigPromise = Promise.promise();
@@ -144,8 +146,22 @@ public class TopicOperations {
                     fullTopicDescriptions.add(topicWithDescription);
                 });
                 Types.TopicList topicList = new Types.TopicList();
-                topicList.setItems(fullTopicDescriptions);
-                topicList.setCount(fullTopicDescriptions.size());
+                //topicList.setItems(fullTopicDescriptions.stream().sorted().collect(Collectors.toList()).subList(offset, limit));
+                fullTopicDescriptions.sort(new CommonHandler.TopicComparator());
+
+                if (offset > fullTopicDescriptions.size()) {
+                    return Future.failedFuture(new InvalidRequestException("Offset (" + offset + ") cannot be greater than topic list size (" + fullTopicDescriptions.size() + ")"));
+                }
+                int tmpLimit = limit;
+                if (tmpLimit == 0) {
+                    tmpLimit = fullTopicDescriptions.size();
+                }
+
+                List<Types.Topic> croppedList = fullTopicDescriptions.subList(offset, Math.min(offset + tmpLimit, fullTopicDescriptions.size()));
+                topicList.setItems(croppedList);
+                topicList.setCount(croppedList.size()); // TODO do we want to return full list count or filtered?
+                topicList.setLimit(tmpLimit);
+                topicList.setOffset(offset);
                 return Future.succeededFuture(topicList);
             }).onComplete(finalRes -> {
                 if (finalRes.failed()) {

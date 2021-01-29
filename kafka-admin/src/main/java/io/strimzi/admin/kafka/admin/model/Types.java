@@ -83,7 +83,7 @@ public class Types {
         }
     }
 
-    public static class Topic {
+    public static class Topic implements Comparable<Topic> {
         // ID
         private String name;
         private Boolean isInternal;
@@ -120,6 +120,11 @@ public class Types {
 
         public void setConfig(List<ConfigEntry> config) {
             this.config = config;
+        }
+
+        @Override
+        public int compareTo(Topic topic) {
+            return getName().compareTo(topic.getName());
         }
     }
 

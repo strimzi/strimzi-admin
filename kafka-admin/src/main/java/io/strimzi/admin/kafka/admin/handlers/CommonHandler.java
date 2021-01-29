@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.strimzi.admin.kafka.admin.model.Types;
 import io.strimzi.kafka.oauth.validator.TokenExpiredException;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -26,6 +27,7 @@ import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Properties;
 
@@ -95,5 +97,12 @@ public class CommonHandler {
                 routingContext.response().end(json);
             }
         });
+    }
+
+    public static class TopicComparator implements Comparator<Types.Topic> {
+        @Override
+        public int compare(Types.Topic firstTopic, Types.Topic secondTopic) {
+            return firstTopic.getName().compareTo(secondTopic.getName());
+        }
     }
 }
