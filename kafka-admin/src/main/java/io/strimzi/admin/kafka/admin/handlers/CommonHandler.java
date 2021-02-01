@@ -67,7 +67,7 @@ public class CommonHandler {
                 if (res.cause() instanceof UnknownTopicOrPartitionException) {
                     routingContext.response().setStatusCode(HttpResponseStatus.NOT_FOUND.code());
                 } else if (res.cause() instanceof TimeoutException) {
-                    routingContext.response().setStatusCode(HttpResponseStatus.REQUEST_TIMEOUT.code());
+                    routingContext.response().setStatusCode(HttpResponseStatus.SERVICE_UNAVAILABLE.code());
                 } else if (res.cause() instanceof AuthenticationException ||
                     res.cause() instanceof AuthorizationException ||
                     res.cause() instanceof TokenExpiredException) {
