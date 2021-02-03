@@ -77,7 +77,7 @@ public class CommonHandler {
                 } else if (res.cause() instanceof InvalidReplicationFactorException) {
                     routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code());
                 } else if (res.cause() instanceof TopicExistsException) {
-                    routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code());
+                    routingContext.response().setStatusCode(HttpResponseStatus.CONFLICT.code());
                 } else if (res.cause() instanceof InvalidRequestException) {
                     routingContext.response().setStatusCode(HttpResponseStatus.BAD_REQUEST.code());
                 } else {

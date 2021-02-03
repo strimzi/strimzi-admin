@@ -8,7 +8,6 @@ import java.util.List;
 
 public class Types {
 
-
     public static class Node {
         private Integer id;
 
@@ -188,19 +187,10 @@ public class Types {
         }
     }
 
-    public static class NewTopic {
-        private String name;
+    public static class NewTopicInput {
         private Integer numPartitions;
         private Integer replicationFactor;
         private List<NewTopicConfigEntry> config;
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
 
         public Integer getNumPartitions() {
             return numPartitions;
@@ -224,6 +214,26 @@ public class Types {
 
         public void setConfig(List<NewTopicConfigEntry> config) {
             this.config = config;
+        }
+    }
+
+    public static class NewTopic {
+        private String name;
+        private NewTopicInput settings;
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public NewTopicInput getSettings() {
+            return settings;
+        }
+
+        public void setSettings(NewTopicInput settings) {
+            this.settings = settings;
         }
     }
 

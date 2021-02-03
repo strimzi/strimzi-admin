@@ -6,6 +6,16 @@ info:
   license:
     name: Apache 2.0
     url: 'https://www.apache.org/licenses/LICENSE-2.0'
+servers:
+  -
+    url: 'https://api.openshift.com'
+    description: Main (production) server
+  -
+    url: 'https://api.stage.openshift.com'
+    description: Staging server
+  -
+    url: 'http://localhost:8001'
+    description: localhost
 paths:
   /topics:
     get:
@@ -61,20 +71,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TopicSettings'
+              $ref: '#/components/schemas/NewTopicInput'
             examples:
-              NewTopic:
+              NewTopicInput:
                 value:
                   name: Pets
-                  numPartitions: 2
-                  replicationFactor: 4
-                  config:
-                    -
-                      key: min.insync.replicas
-                      value: '1'
-                    -
-                      key: max.message.bytes
-                      value: '1050000'
+                  settings:
+                    numPartitions: 3
+                    replicationFactor: 4
+                    config:
+                      -
+                        key: min.insync.replicas
+                        value: '1'
+                      -
+                        key: max.message.bytes
+                        value: '1050000'
         required: true
       responses:
         '201':
@@ -178,7 +189,7 @@ paths:
         '500':
           description: Internal server error.
         '503':
-          description: Unable to connect to the Kafka cluster.  
+          description: Unable to connect to the Kafka cluster.
       operationId: updateTopic
       summary: Updates the topic with the specified name.
       description: updates the topic with the new data.
@@ -193,7 +204,7 @@ paths:
 components:
   schemas:
     Topic:
-      title: Root Type for NewTopic
+      title: Root Type for NewTopicInput
       description: Kafka Topic (A feed where records are stored and published)
       type: object
       properties:
@@ -364,7 +375,7 @@ components:
         limit: 90
         count: 94
     TopicSettings:
-      title: Root Type for NewTopic
+      title: Root Type for NewTopicInput
       description: Kafka Topic (A feed where records are stored and published)
       type: object
       properties:
@@ -392,3 +403,29 @@ components:
     Node:
       description: Kafka server / broker.
       type: object
+    NewTopicInput:
+      description: Input object to create a new topic.
+      required:
+        - name
+      type: object
+      properties:
+        name:
+          description: 'The topic name, this value must be unique.'
+          type: string
+        settings:
+          $ref: '#/components/schemas/TopicSettings'
+          description: >-
+            The settings that are applicable to this topic.  This includes partitions,
+            configuration information, and number of replicas.
+      example:
+        name: Pets
+        settings:
+          numPartitions: 3
+          replicationFactor: 4
+          config:
+            -
+              key: min.insync.replicas
+              value: '1'
+            -
+              key: max.message.bytes
+              value: '1050000'

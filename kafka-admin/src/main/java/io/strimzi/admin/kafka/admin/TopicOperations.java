@@ -38,14 +38,14 @@ public class TopicOperations {
         NewTopic newKafkaTopic = new NewTopic();
 
         Map<String, String> config = new HashMap<>();
-        List<Types.NewTopicConfigEntry> configObject = inputTopic.getConfig();
+        List<Types.NewTopicConfigEntry> configObject = inputTopic.getSettings().getConfig();
         configObject.forEach(item -> {
             config.put(item.getKey(), item.getValue());
         });
 
         newKafkaTopic.setName(inputTopic.getName());
-        newKafkaTopic.setReplicationFactor(inputTopic.getReplicationFactor().shortValue());
-        newKafkaTopic.setNumPartitions(inputTopic.getNumPartitions());
+        newKafkaTopic.setReplicationFactor(inputTopic.getSettings().getReplicationFactor().shortValue());
+        newKafkaTopic.setNumPartitions(inputTopic.getSettings().getNumPartitions());
         if (config != null) {
             newKafkaTopic.setConfig(config);
         }
