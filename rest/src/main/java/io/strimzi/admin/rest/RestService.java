@@ -4,8 +4,10 @@
  */
 package io.strimzi.admin.rest;
 
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.strimzi.admin.http.server.registration.RouteRegistration;
 import io.strimzi.admin.http.server.registration.RouteRegistrationDescriptor;
+import io.strimzi.admin.kafka.admin.HttpMetrics;
 import io.strimzi.admin.kafka.admin.KafkaAdmin;
 import io.strimzi.admin.kafka.admin.handlers.RestOperations;
 import io.vertx.core.Future;
@@ -23,6 +25,7 @@ public class RestService implements RouteRegistration {
 
     protected final Logger log = LogManager.getLogger(RestService.class);
     KafkaAdmin ka;
+    HttpMetrics httpMetrics = new HttpMetrics();
 
     @Override
     public Future<RouteRegistrationDescriptor> getRegistrationDescriptor(final Vertx vertx) {
@@ -50,11 +53,13 @@ public class RestService implements RouteRegistration {
 
     private void assignRoutes(final OpenAPI3RouterFactory routerFactory, final Vertx vertx) {
         RestOperations ro = new RestOperations();
-        routerFactory.addHandlerByOperationId("getTopic", ro.describeTopic(ka.getAcConfig(), vertx));
-        routerFactory.addHandlerByOperationId("getTopicsList", ro.listTopics(ka.getAcConfig(), vertx));
+        routerFactory.addHandlerByOperationId("getTopic", ro.describeTopic(ka.getAcConfig(), vertx, httpMetrics));
+        routerFactory.addHandlerByOperationId("getTopicsList", ro.listTopics(ka.getAcConfig(), vertx, httpMetrics));
 
-        routerFactory.addHandlerByOperationId("deleteTopic", ro.deleteTopic(ka.getAcConfig(), vertx));
-        routerFactory.addHandlerByOperationId("createTopic", ro.createTopic(ka.getAcConfig(), vertx));
-        routerFactory.addHandlerByOperationId("updateTopic", ro.updateTopic(ka.getAcConfig(), vertx));
+        routerFactory.addHandlerByOperationId("deleteTopic", ro.deleteTopic(ka.getAcConfig(), vertx, httpMetrics));
+        routerFactory.addHandlerByOperationId("createTopic", ro.createTopic(ka.getAcConfig(), vertx, httpMetrics));
+        routerFactory.addHandlerByOperationId("updateTopic", ro.updateTopic(ka.getAcConfig(), vertx, httpMetrics));
+
+        routerFactory.addHandlerByOperationId("metrics", routingContext -> routingContext.response().setStatusCode(HttpResponseStatus.OK.code()).end(httpMetrics.getRegistry().scrape()));
     }
 }

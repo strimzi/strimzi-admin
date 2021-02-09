@@ -4,14 +4,15 @@
  */
 package io.strimzi.admin.kafka.admin.handlers;
 
+import io.strimzi.admin.kafka.admin.HttpMetrics;
 import io.vertx.core.Vertx;
 
 import java.util.Map;
 
 public interface OperationsHandler<T extends Object> {
-    public T createTopic(Map<String, Object> acConfig, Vertx vertx);
-    public T describeTopic(Map<String, Object> acConfig, Vertx vertx);
-    public T updateTopic(Map<String, Object> acConfig, Vertx vertx);
-    public T deleteTopic(Map<String, Object> acConfig, Vertx vertx);
-    public T listTopics(Map<String, Object> acConfig, Vertx vertx);
+    public T createTopic(Map<String, Object> acConfig, Vertx vertx, HttpMetrics httpMetrics);
+    public T describeTopic(Map<String, Object> acConfig, Vertx vertx, HttpMetrics httpMetrics);
+    public T updateTopic(Map<String, Object> acConfig, Vertx vertx, HttpMetrics httpMetrics);
+    public T deleteTopic(Map<String, Object> acConfig, Vertx vertx, HttpMetrics httpMetrics);
+    public T listTopics(Map<String, Object> acConfig, Vertx vertx, HttpMetrics httpMetrics);
 }

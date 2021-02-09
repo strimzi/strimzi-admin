@@ -10,11 +10,16 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
+
+import io.vertx.micrometer.MicrometerMetricsOptions;
+import io.vertx.micrometer.VertxPrometheusOptions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -32,6 +37,13 @@ public class AdminServer extends AbstractVerticle {
 
     @Override
     public void start(final Promise<Void> startServer) {
+        VertxOptions options = new VertxOptions().setMetricsOptions(
+                new MicrometerMetricsOptions()
+                        .setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true))
+                        .setJvmMetricsEnabled(true)
+                        .setEnabled(true));
+        vertx = Vertx.vertx(options);
+
 
         loadRoutes()
             .onSuccess(router -> {

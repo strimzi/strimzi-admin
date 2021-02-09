@@ -7,7 +7,9 @@ package io.strimzi.admin.kafka.admin.handlers;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import io.micrometer.core.instrument.Timer;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.strimzi.admin.kafka.admin.HttpMetrics;
 import io.strimzi.admin.kafka.admin.model.Types;
 import io.strimzi.kafka.oauth.validator.TokenExpiredException;
 import io.vertx.core.Future;
@@ -61,7 +63,7 @@ public class CommonHandler {
         }
     }
 
-    protected static <T> void processResponse(Promise<T> prom, RoutingContext routingContext, HttpResponseStatus responseStatus) {
+    protected static <T> void processResponse(Promise<T> prom, RoutingContext routingContext, HttpResponseStatus responseStatus, HttpMetrics httpMetrics, Timer.Sample requestTimerSample) {
         prom.future().onComplete(res -> {
             if (res.failed()) {
                 if (res.cause() instanceof UnknownTopicOrPartitionException) {
@@ -84,6 +86,8 @@ public class CommonHandler {
                     routingContext.response().setStatusCode(responseStatus.code());
                 }
                 routingContext.response().end(res.cause().getMessage());
+                httpMetrics.getFailedRequestsCounter().increment();
+                requestTimerSample.stop(httpMetrics.getRequestTimer());
             } else {
                 ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
                 String json = null;
@@ -92,9 +96,13 @@ public class CommonHandler {
                 } catch (JsonProcessingException e) {
                     routingContext.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
                     routingContext.response().end(e.getMessage());
+                    httpMetrics.getFailedRequestsCounter().increment();
+                    requestTimerSample.stop(httpMetrics.getRequestTimer());
                 }
                 routingContext.response().setStatusCode(responseStatus.code());
                 routingContext.response().end(json);
+                httpMetrics.getSucceededRequestsCounter().increment();
+                requestTimerSample.stop(httpMetrics.getRequestTimer());
             }
         });
     }

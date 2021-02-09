@@ -201,6 +201,13 @@ paths:
           type: string
         in: path
         required: true
+  /metrics:
+    get:
+      responses:
+        '200':
+          description: Metrics
+      operationId: metrics
+      summary: Admin server metrics
 components:
   schemas:
     Topic:
