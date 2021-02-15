@@ -303,4 +303,154 @@ public class Types {
             this.order = order;
         }
     }
+
+    public static class ConsumerGroup {
+        private String id;
+        private Boolean simple;
+
+        public Boolean getSimple() {
+            return simple;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
+
+        public void setSimple(Boolean simple) {
+            this.simple = simple;
+        }
+    }
+
+    public static class ConsumerGroupDescription extends ConsumerGroup {
+        private Coordinator coordinator;
+
+        public List<MemberDesc> getMembers() {
+            return members;
+        }
+
+        public void setMembers(List<MemberDesc> members) {
+            this.members = members;
+        }
+
+        private List<MemberDesc> members;
+
+        public String getState() {
+            return state;
+        }
+
+        public void setState(String state) {
+            this.state = state;
+        }
+
+        private String state;
+
+        public Coordinator getCoordinator() {
+            return coordinator;
+        }
+
+        public void setCoordinator(Coordinator coordinator) {
+            this.coordinator = coordinator;
+        }
+    }
+
+    public static class MemberDesc {
+        private String clientId;
+        private String consumerId;
+        private List<Integer> assignment;
+
+        public String getClientId() {
+            return clientId;
+        }
+
+        public void setClientId(String clientId) {
+            this.clientId = clientId;
+        }
+
+        public String getConsumerId() {
+            return consumerId;
+        }
+
+        public void setConsumerId(String consumerId) {
+            this.consumerId = consumerId;
+        }
+
+        public List<Integer> getAssignment() {
+            return assignment;
+        }
+
+        public void setAssignment(List<Integer> assignment) {
+            this.assignment = assignment;
+        }
+
+        public String getHost() {
+            return host;
+        }
+
+        public void setHost(String host) {
+            this.host = host;
+        }
+
+        private String host;
+    }
+
+    public static class Coordinator {
+        private boolean hasRack;
+        private String host;
+        private int id;
+        private boolean isEmpty;
+        private int port;
+        private String rack;
+
+        public boolean isHasRack() {
+            return hasRack;
+        }
+
+        public void setHasRack(boolean hasRack) {
+            this.hasRack = hasRack;
+        }
+
+        public String getHost() {
+            return host;
+        }
+
+        public void setHost(String host) {
+            this.host = host;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public void setId(int id) {
+            this.id = id;
+        }
+
+        public boolean isEmpty() {
+            return isEmpty;
+        }
+
+        public void setEmpty(boolean empty) {
+            isEmpty = empty;
+        }
+
+        public int getPort() {
+            return port;
+        }
+
+        public void setPort(int port) {
+            this.port = port;
+        }
+
+        public String getRack() {
+            return rack;
+        }
+
+        public void setRack(String rack) {
+            this.rack = rack;
+        }
+    }
 }

@@ -14,11 +14,15 @@ public class HttpMetrics {
     private Counter requestsCounter;
     private Counter failedRequestsCounter;
     private Counter succeededRequestsCounter;
-    private Counter deleteCounter;
-    private Counter createCounter;
-    private Counter updateCounter;
-    private Counter listCounter;
-    private Counter describeCounter;
+    private Counter deleteTopicCounter;
+    private Counter createTopicCounter;
+    private Counter updateTopicCounter;
+    private Counter listTopicsCounter;
+    private Counter describeTopicCounter;
+
+    private Counter describeGroupCounter;
+    private Counter listGroupsCounter;
+    private Counter deleteGroupCounter;
     private Timer requestTimer;
 
     public HttpMetrics() {
@@ -31,11 +35,15 @@ public class HttpMetrics {
         failedRequestsCounter = meterRegistry.counter("failed_requests");
         succeededRequestsCounter = meterRegistry.counter("succeeded_requests");
         requestTimer = meterRegistry.timer("request_time");
-        deleteCounter = meterRegistry.counter("delete_requests");
-        createCounter = meterRegistry.counter("create_requests");
-        updateCounter = meterRegistry.counter("update_requests");
-        listCounter = meterRegistry.counter("list_requests");
-        describeCounter = meterRegistry.counter("describe_requests");
+        deleteTopicCounter = meterRegistry.counter("delete_topic_requests");
+        createTopicCounter = meterRegistry.counter("create_topic_requests");
+        updateTopicCounter = meterRegistry.counter("update_topic_requests");
+        listTopicsCounter = meterRegistry.counter("list_topics_requests");
+        describeTopicCounter = meterRegistry.counter("describe_topic_requests");
+
+        listGroupsCounter = meterRegistry.counter("list_groups_requests");
+        describeGroupCounter = meterRegistry.counter("get_group_requests");
+        deleteGroupCounter = meterRegistry.counter("delete_group_requests");
     }
 
     public PrometheusMeterRegistry getRegistry() {
@@ -58,23 +66,35 @@ public class HttpMetrics {
         return requestTimer;
     }
 
-    public Counter getCreateCounter() {
-        return createCounter;
+    public Counter getCreateTopicCounter() {
+        return createTopicCounter;
     }
 
-    public Counter getDeleteCounter() {
-        return deleteCounter;
+    public Counter getDeleteTopicCounter() {
+        return deleteTopicCounter;
     }
 
-    public Counter getDescribeCounter() {
-        return describeCounter;
+    public Counter getDescribeTopicCounter() {
+        return describeTopicCounter;
     }
 
-    public Counter getListCounter() {
-        return listCounter;
+    public Counter getListTopicsCounter() {
+        return listTopicsCounter;
     }
 
-    public Counter getUpdateCounter() {
-        return updateCounter;
+    public Counter getUpdateTopicCounter() {
+        return updateTopicCounter;
+    }
+
+    public Counter getDeleteGroupCounter() {
+        return deleteGroupCounter;
+    }
+
+    public Counter getDescribeGroupCounter() {
+        return describeGroupCounter;
+    }
+
+    public Counter getListGroupsCounter() {
+        return listGroupsCounter;
     }
 }

@@ -60,6 +60,11 @@ public class RestService implements RouteRegistration {
         routerFactory.addHandlerByOperationId("createTopic", ro.createTopic(ka.getAcConfig(), vertx, httpMetrics));
         routerFactory.addHandlerByOperationId("updateTopic", ro.updateTopic(ka.getAcConfig(), vertx, httpMetrics));
 
+        routerFactory.addHandlerByOperationId("getGroup", ro.describeGroup(ka.getAcConfig(), vertx, httpMetrics));
+        routerFactory.addHandlerByOperationId("getGroupsList", ro.listGroups(ka.getAcConfig(), vertx, httpMetrics));
+
+        routerFactory.addHandlerByOperationId("deleteGroup", ro.deleteGroup(ka.getAcConfig(), vertx, httpMetrics));
+
         routerFactory.addHandlerByOperationId("metrics", routingContext -> routingContext.response().setStatusCode(HttpResponseStatus.OK.code()).end(httpMetrics.getRegistry().scrape()));
     }
 }

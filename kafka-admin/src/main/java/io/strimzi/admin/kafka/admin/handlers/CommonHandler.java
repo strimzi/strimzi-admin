@@ -32,6 +32,10 @@ import org.apache.logging.log4j.Logger;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class CommonHandler {
     protected static final Logger log = LogManager.getLogger(CommonHandler.class);
@@ -112,5 +116,28 @@ public class CommonHandler {
         public int compare(Types.Topic firstTopic, Types.Topic secondTopic) {
             return firstTopic.getName().compareTo(secondTopic.getName());
         }
+    }
+
+    public static class ConsumerGroupComparator implements Comparator<Types.ConsumerGroup> {
+        @Override
+        public int compare(Types.ConsumerGroup firstConsumerGroup, Types.ConsumerGroup secondConsumerGroup) {
+            return firstConsumerGroup.getId().compareTo(secondConsumerGroup.getId());
+        }
+    }
+
+    public static Predicate<String> byName(Pattern pattern, Promise prom) {
+        return topic -> {
+            if (pattern == null) {
+                return true;
+            } else {
+                try {
+                    Matcher matcher = pattern.matcher(topic);
+                    return matcher.find();
+                } catch (PatternSyntaxException ex) {
+                    prom.fail(ex);
+                    return false;
+                }
+            }
+        };
     }
 }

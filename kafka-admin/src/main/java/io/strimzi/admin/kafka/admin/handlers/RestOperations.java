@@ -7,6 +7,7 @@ package io.strimzi.admin.kafka.admin.handlers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.Timer;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.strimzi.admin.kafka.admin.ConsumerGroupOperations;
 import io.strimzi.admin.kafka.admin.HttpMetrics;
 import io.strimzi.admin.kafka.admin.TopicOperations;
 import io.strimzi.admin.kafka.admin.model.Types;
@@ -26,7 +27,7 @@ public class RestOperations extends CommonHandler implements OperationsHandler<H
     @Override
     public Handler<RoutingContext> createTopic(Map<String, Object> acConfig, Vertx vertx, HttpMetrics httpMetrics) {
         return routingContext -> {
-            httpMetrics.getCreateCounter().increment();
+            httpMetrics.getCreateTopicCounter().increment();
             httpMetrics.getRequestsCounter().increment();
             Timer.Sample requestTimerSample = Timer.start(httpMetrics.getRegistry());
             setOAuthToken(acConfig, routingContext);
@@ -57,7 +58,7 @@ public class RestOperations extends CommonHandler implements OperationsHandler<H
     @Override
     public Handler<RoutingContext> describeTopic(Map<String, Object> acConfig, Vertx vertx, HttpMetrics httpMetrics) {
         return routingContext -> {
-            httpMetrics.getDescribeCounter().increment();
+            httpMetrics.getDescribeTopicCounter().increment();
             httpMetrics.getRequestsCounter().increment();
             Timer.Sample requestTimerSample = Timer.start(httpMetrics.getRegistry());
             setOAuthToken(acConfig, routingContext);
@@ -82,7 +83,7 @@ public class RestOperations extends CommonHandler implements OperationsHandler<H
     @Override
     public Handler<RoutingContext> updateTopic(Map<String, Object> acConfig, Vertx vertx, HttpMetrics httpMetrics) {
         return routingContext -> {
-            httpMetrics.getUpdateCounter().increment();
+            httpMetrics.getUpdateTopicCounter().increment();
             httpMetrics.getRequestsCounter().increment();
             Timer.Sample requestTimerSample = Timer.start(httpMetrics.getRegistry());
             setOAuthToken(acConfig, routingContext);
@@ -120,7 +121,7 @@ public class RestOperations extends CommonHandler implements OperationsHandler<H
     @Override
     public Handler<RoutingContext> deleteTopic(Map<String, Object> acConfig, Vertx vertx, HttpMetrics httpMetrics) {
         return routingContext -> {
-            httpMetrics.getDeleteCounter().increment();
+            httpMetrics.getDeleteTopicCounter().increment();
             httpMetrics.getRequestsCounter().increment();
             Timer.Sample requestTimerSample = Timer.start(httpMetrics.getRegistry());
             setOAuthToken(acConfig, routingContext);
@@ -148,7 +149,7 @@ public class RestOperations extends CommonHandler implements OperationsHandler<H
     public Handler<RoutingContext> listTopics(Map<String, Object> acConfig, Vertx vertx, HttpMetrics httpMetrics) {
         return routingContext -> {
             Timer.Sample requestTimerSample = Timer.start(httpMetrics.getRegistry());
-            httpMetrics.getListCounter().increment();
+            httpMetrics.getListTopicsCounter().increment();
             httpMetrics.getRequestsCounter().increment();
             setOAuthToken(acConfig, routingContext);
             String filter = routingContext.queryParams().get("filter");
@@ -170,11 +171,100 @@ public class RestOperations extends CommonHandler implements OperationsHandler<H
                         if (Integer.parseInt(offset) < 0 || Integer.parseInt(limit) < 0) {
                             throw new InvalidRequestException("Offset and limit have to be positive integers.");
                         }
-                        TopicOperations.getList(ac.result(), prom, pattern, Integer.parseInt(offset), Integer.parseInt(limit));
+                        TopicOperations.getTopicList(ac.result(), prom, pattern, Integer.parseInt(offset), Integer.parseInt(limit));
                     } catch (NumberFormatException | InvalidRequestException e) {
                         prom.fail(e);
                         processResponse(prom, routingContext, HttpResponseStatus.BAD_REQUEST, httpMetrics, requestTimerSample);
                     }
+                }
+                processResponse(prom, routingContext, HttpResponseStatus.OK, httpMetrics, requestTimerSample);
+            });
+        };
+    }
+
+    @Override
+    public Handler<RoutingContext> listGroups(Map<String, Object> acConfig, Vertx vertx, HttpMetrics httpMetrics) {
+        return routingContext -> {
+            Timer.Sample requestTimerSample = Timer.start(httpMetrics.getRegistry());
+            httpMetrics.getListGroupsCounter().increment();
+            httpMetrics.getRequestsCounter().increment();
+            setOAuthToken(acConfig, routingContext);
+            String filter = routingContext.queryParams().get("filter");
+            String limit = routingContext.queryParams().get("limit") == null ? "0" : routingContext.queryParams().get("limit");
+            String offset = routingContext.queryParams().get("offset") == null ? "0" : routingContext.queryParams().get("offset");
+            final Pattern pattern;
+            Promise<Types.TopicList> prom = Promise.promise();
+            if (filter != null && !filter.isEmpty()) {
+                pattern = Pattern.compile(filter);
+            } else {
+                pattern = null;
+            }
+
+            createAdminClient(vertx, acConfig).onComplete(ac -> {
+                if (ac.failed()) {
+                    prom.fail(ac.cause());
+                } else {
+                    try {
+                        if (Integer.parseInt(offset) < 0 || Integer.parseInt(limit) < 0) {
+                            throw new InvalidRequestException("Offset and limit have to be positive integers.");
+                        }
+                        ConsumerGroupOperations.getGroupList(ac.result(), prom, pattern, Integer.parseInt(offset), Integer.parseInt(limit));
+                    } catch (NumberFormatException | InvalidRequestException e) {
+                        prom.fail(e);
+                        processResponse(prom, routingContext, HttpResponseStatus.BAD_REQUEST, httpMetrics, requestTimerSample);
+                    }
+                }
+                processResponse(prom, routingContext, HttpResponseStatus.OK, httpMetrics, requestTimerSample);
+            });
+        };
+    }
+
+    @Override
+    public Handler<RoutingContext> describeGroup(Map<String, Object> acConfig, Vertx vertx, HttpMetrics httpMetrics) {
+        return routingContext -> {
+            httpMetrics.getDescribeGroupCounter().increment();
+            httpMetrics.getRequestsCounter().increment();
+            Timer.Sample requestTimerSample = Timer.start(httpMetrics.getRegistry());
+            setOAuthToken(acConfig, routingContext);
+            String uri = routingContext.request().uri();
+            String groupToDescribe = uri.substring(uri.lastIndexOf("/") + 1);
+            Promise<Types.Topic> prom = Promise.promise();
+            if (groupToDescribe == null || groupToDescribe.isEmpty()) {
+                prom.fail("Consumer ConsumerGroup to describe has not been specified.");
+                processResponse(prom, routingContext, HttpResponseStatus.BAD_REQUEST, httpMetrics, requestTimerSample);
+            }
+            createAdminClient(vertx, acConfig).onComplete(ac -> {
+                if (ac.failed()) {
+                    prom.fail(ac.cause());
+                } else {
+                    ConsumerGroupOperations.describeGroup(ac.result(), prom, Collections.singletonList(groupToDescribe));
+                }
+                processResponse(prom, routingContext, HttpResponseStatus.OK, httpMetrics, requestTimerSample);
+            });
+        };
+    }
+
+    @Override
+    public Handler<RoutingContext> deleteGroup(Map<String, Object> acConfig, Vertx vertx, HttpMetrics httpMetrics) {
+        return routingContext -> {
+            httpMetrics.getDeleteGroupCounter().increment();
+            httpMetrics.getRequestsCounter().increment();
+            Timer.Sample requestTimerSample = Timer.start(httpMetrics.getRegistry());
+            setOAuthToken(acConfig, routingContext);
+            String uri = routingContext.request().uri();
+            String groupToDelete = uri.substring(uri.lastIndexOf("/") + 1);
+            Promise<List<String>> prom = Promise.promise();
+            if (groupToDelete == null || groupToDelete.isEmpty()) {
+                prom.fail("Consumer ConsumerGroup to delete has not been specified.");
+                processResponse(prom, routingContext, HttpResponseStatus.BAD_REQUEST, httpMetrics, requestTimerSample);
+                return;
+            }
+
+            createAdminClient(vertx, acConfig).onComplete(ac -> {
+                if (ac.failed()) {
+                    prom.fail(ac.cause());
+                } else {
+                    ConsumerGroupOperations.deleteGroup(ac.result(), Collections.singletonList(groupToDelete), prom);
                 }
                 processResponse(prom, routingContext, HttpResponseStatus.OK, httpMetrics, requestTimerSample);
             });

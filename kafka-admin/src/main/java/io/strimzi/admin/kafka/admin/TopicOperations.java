@@ -24,10 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Predicate;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 public class TopicOperations {
@@ -114,7 +111,7 @@ public class TopicOperations {
         return result;
     }
 
-    public static void getList(KafkaAdminClient ac, Promise prom, Pattern pattern, int offset, final int limit) {
+    public static void getTopicList(KafkaAdminClient ac, Promise prom, Pattern pattern, int offset, final int limit) {
         Promise<Set<String>> describeTopicsNamesPromise = Promise.promise();
         Promise<Map<String, io.vertx.kafka.admin.TopicDescription>> describeTopicsPromise = Promise.promise();
         Promise<Map<ConfigResource, Config>> describeTopicConfigPromise = Promise.promise();
@@ -125,7 +122,7 @@ public class TopicOperations {
         ac.listTopics(describeTopicsNamesPromise);
         describeTopicsNamesPromise.future()
             .compose(topics -> {
-                List<String> filteredList = topics.stream().filter(topicName -> byTopicName(pattern, prom).test(topicName)).collect(Collectors.toList());
+                List<String> filteredList = topics.stream().filter(topicName -> CommonHandler.byName(pattern, prom).test(topicName)).collect(Collectors.toList());
                 ac.describeTopics(filteredList, describeTopicsPromise);
                 return describeTopicsPromise.future();
             }).compose(topics -> {
@@ -146,7 +143,6 @@ public class TopicOperations {
                     fullTopicDescriptions.add(topicWithDescription);
                 });
                 Types.TopicList topicList = new Types.TopicList();
-                //topicList.setItems(fullTopicDescriptions.stream().sorted().collect(Collectors.toList()).subList(offset, limit));
                 fullTopicDescriptions.sort(new CommonHandler.TopicComparator());
 
                 if (offset > fullTopicDescriptions.size()) {
@@ -211,22 +207,6 @@ public class TopicOperations {
                     }
                     ac.close();
                 });
-    }
-
-    private static Predicate<String> byTopicName(Pattern pattern, Promise prom) {
-        return topic -> {
-            if (pattern == null) {
-                return true;
-            } else {
-                try {
-                    Matcher matcher = pattern.matcher(topic);
-                    return matcher.find();
-                } catch (PatternSyntaxException ex) {
-                    prom.fail(ex);
-                    return false;
-                }
-            }
-        };
     }
 
     private static List<Types.ConfigEntry> getTopicConf(Config cfg) {

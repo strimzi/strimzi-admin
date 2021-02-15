@@ -16,6 +16,9 @@ servers:
   -
     url: 'http://localhost:8001'
     description: localhost
+  -
+    url: 'http://localhost:8000'
+    description: localhost
 paths:
   /topics:
     get:
@@ -208,6 +211,37 @@ paths:
           description: Metrics
       operationId: metrics
       summary: Admin server metrics
+  /groups:
+    get:
+      responses:
+        '200':
+          content:
+            application/json: {}
+          description: OK
+      operationId: getGroupsList
+  '/groups/{groupName}':
+    get:
+      responses:
+        '200':
+          content:
+            application/json: {}
+          description: OK
+      operationId: getGroup
+    delete:
+      responses:
+        '200':
+          content:
+            application/json: {}
+          description: OK
+      operationId: deleteGroup
+    parameters:
+      -
+        name: groupName
+        description: Consumer group identificator
+        schema:
+          type: string
+        in: path
+        required: true
 components:
   schemas:
     Topic:

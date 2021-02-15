@@ -25,6 +25,8 @@ spec:
               value: "my-cluster-kafka-bootstrap:9092"
             - name: VERTXWEB_ENVIRONMENT
               value: "dev"
+            - name: KAFKA_ADMIN_OAUTH_ENABLED
+              value: "false"
 ---
 apiVersion: v1
 kind: Service
