@@ -1,3 +1,7 @@
+/*
+ * Copyright Strimzi authors.
+ * License: Apache License 2.0 (see the file LICENSE or http://apache.org/licenses/LICENSE-2.0.html).
+ */
 package io.strimzi.admin;
 
 import io.strimzi.admin.http.server.AdminServer;
@@ -16,7 +20,7 @@ public class Main {
      *
      * @param args the command line arguments
      */
-    public static void main(final String[] args) {
+    public static void main(final String[] args) throws Exception {
         LOGGER.info("AdminServer is starting.");
 
         final Vertx vertx = Vertx.vertx();
@@ -29,8 +33,8 @@ public class Main {
 
     static Future<String> run(final Vertx vertx) {
         final Promise<String> promise = Promise.promise();
-        final AdminServer adminServer = new AdminServer();
 
+        final AdminServer adminServer = new AdminServer();
         vertx.deployVerticle(adminServer,
             res -> {
                 if (res.failed()) {
